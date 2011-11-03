@@ -9,7 +9,9 @@ require 'omniauth-google-oauth2'
 use Rack::Session::Cookie
 
 use OmniAuth::Builder do
-  provider :google_oauth2,  ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET']
+  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {
+    :scope => 'https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/plus.stream.read https://www.googleapis.com/auth/plus.stream.write https://www.googleapis.com/auth/plus.circles.read https://www.googleapis.com/auth/plus.circles.write'
+  }
 end
 
 get '/' do
