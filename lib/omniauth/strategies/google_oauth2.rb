@@ -2,9 +2,7 @@ require 'omniauth/strategies/oauth2'
 
 module OmniAuth
   module Strategies
-    class GoogleOauth2
-      include OmniAuth::Strategy
-
+    class GoogleOauth2 < OmniAuth::Strategies::OAuth2
       option :client_options, {
         :site => 'https://accounts.google.com',
         :authorize_url => '/o/oauth2/auth',
