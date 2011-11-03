@@ -1,4 +1,4 @@
-# Sample app for Google OAuth2 Strateg
+# Sample app for Google OAuth2 Strategy
 # Run with "bundle exec rackup"
 
 require 'rubygems'
@@ -18,12 +18,12 @@ class App < Sinatra::Base
 
   get '/auth/:provider/callback' do
     content_type 'text/plain'
-    request.env['omniauth.auth'].info.to_hash.inspect
+    request.env['omniauth.auth'].to_hash.inspect
   end
   
   get '/auth/failure' do
     content_type 'text/plain'
-    request.env['omniauth.auth'].info.to_hash.inspect
+    request.env['omniauth.auth'].to_hash.inspect
   end
 end
 
