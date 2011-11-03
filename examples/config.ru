@@ -7,6 +7,8 @@ require 'sinatra'
 require 'omniauth'
 require 'omniauth-google-oauth2'
 
+OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
+
 class App < Sinatra::Base
   get '/' do
     <<-HTML
@@ -18,12 +20,12 @@ class App < Sinatra::Base
 
   get '/auth/:provider/callback' do
     content_type 'text/plain'
-    request.env['omniauth.auth'].to_hash.inspect
+    request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
   end
   
   get '/auth/failure' do
     content_type 'text/plain'
-    request.env['omniauth.auth'].to_hash.inspect
+    request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
   end
 end
 

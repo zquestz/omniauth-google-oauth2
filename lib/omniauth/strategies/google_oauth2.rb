@@ -12,10 +12,11 @@ module OmniAuth
       }
 
       def request_phase
-        redirect client.auth_code.authorize_url(authorize_options)
+        setup_authorize_params
+        super
       end
 
-      def authorize_options
+      def setup_authorize_params
         opts = {
           :client_id => options[:client_id],
           :redirect_uri => callback_url,
@@ -25,7 +26,7 @@ module OmniAuth
         google_email_scope = "www.googleapis.com/auth/userinfo.email"
         opts[:scope] ||= "https://#{google_email_scope}"
         opts[:scope] << " https://#{google_email_scope}" unless opts[:scope] =~ %r[http[s]?:\/\/#{google_email_scope}]
-        opts
+        options[:authorize_params] = opts.merge(options[:authorize_params])
       end
 
       def auth_hash

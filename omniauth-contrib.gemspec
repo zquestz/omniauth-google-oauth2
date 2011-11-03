@@ -18,4 +18,7 @@ Gem::Specification.new do |gem|
   gem.version       = OmniAuth::GoogleOauth2::VERSION
 
   gem.add_runtime_dependency 'omniauth-oauth2'
+
+  gem.add_development_dependency 'rspec', '~> 2.6.0'
+  gem.add_development_dependency 'rake'
 end
