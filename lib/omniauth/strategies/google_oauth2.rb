@@ -5,8 +5,8 @@ module OmniAuth
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
       option :client_options, {
         :site => 'https://accounts.google.com',
-        :authorize_url => '/o/oauth2/auth',
-        :token_url => '/o/oauth2/token'
+        :authorize_path => '/o/oauth2/auth',
+        :token_path => '/o/oauth2/token'
       }
 
       def request_phase
