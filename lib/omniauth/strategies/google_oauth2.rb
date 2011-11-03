@@ -33,7 +33,7 @@ module OmniAuth
         OmniAuth::Utils.deep_merge(super, {
           'uid' => info['uid'],
           'info' => info,
-          'credentials' => {'expires_at' => @access_token.expires_at},
+          'credentials' => {'expires_at' => access_token.expires_at},
           'extra' => {'user_hash' => user_data}
         })
       end
@@ -53,8 +53,7 @@ module OmniAuth
       end
 
       def user_data
-        @data ||= 
-          @access_token.get("https://www.googleapis.com/userinfo/email?alt=json").parsed
+        @data ||= access_token.get("https://www.googleapis.com/userinfo/email?alt=json").parsed
       end
     end
   end
