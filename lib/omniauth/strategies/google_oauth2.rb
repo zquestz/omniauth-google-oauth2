@@ -1,20 +1,34 @@
 require 'omniauth/strategies/oauth2'
+OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 module OmniAuth
   module Strategies
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
+      option :name, 'google_oauth2'
       option :client_options, {
         :site => 'https://accounts.google.com',
-        :authorize_path => '/o/oauth2/auth',
-        :token_path => '/o/oauth2/token'
+        :authorize_url => '/o/oauth2/auth',
+        :token_url => '/o/oauth2/token'
       }
 
       def request_phase
+        redirect client.auth_code.authorize_url({
+          :redirect_uri => callback_url, 
+          :response_type => "code"}.merge(authorize_options)
+        )
+      end
+
+      def authorize_options
+        opts = {
+          :client_id => options[:client_id],
+          :redirect_url => callback_url,
+          :response_type => "code",
+          :scope => options[:scope]
+        }
         google_email_scope = "www.googleapis.com/auth/userinfo.email"
-        options[:scope] ||= "https://#{google_email_scope}"
-        options[:scope] << " https://#{google_email_scope}" unless options[:scope] =~ %r[http[s]?:\/\/#{google_email_scope}]
-        redirect client.auth_code.authorize_url(
-          {:redirect_uri => callback_url, :response_type => "code"}.merge(options))
+        opts[:scope] ||= "https://#{google_email_scope}"
+        opts[:scope] << " https://#{google_email_scope}" unless options[:scope] =~ %r[http[s]?:\/\/#{google_email_scope}]
+        opts
       end
 
       def auth_hash

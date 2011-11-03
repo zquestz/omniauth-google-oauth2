@@ -17,13 +17,13 @@ class App < Sinatra::Base
   end
 
   get '/auth/:provider/callback' do
-    content_type 'application/json'
-    MultiJson.encode(request.env)
+    content_type 'text/plain'
+    request.env['omniauth.auth'].info.to_hash.inspect
   end
   
   get '/auth/failure' do
-    content_type 'application/json'
-    MultiJson.encode(request.env)
+    content_type 'text/plain'
+    request.env['omniauth.auth'].info.to_hash.inspect
   end
 end
 
