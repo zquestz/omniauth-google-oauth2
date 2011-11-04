@@ -1,6 +1,6 @@
-# OmniAuth Google Oauth2 Strategy
+# OmniAuth Google OAuth2 Strategy
 
-Strategy to auth with Google via Oauth2 in OmniAuth.
+Strategy to auth with Google via OAuth2 in OmniAuth.
 
 ## License
 
