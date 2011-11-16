@@ -19,7 +19,7 @@ module OmniAuth
       def setup_authorize_params
         opts = {
           :client_id => options[:client_id],
-          :redirect_uri => callback_url,
+          :redirect_uri => options[:redirect_uri] || callback_url,
           :response_type => "code",
           :scope => options[:scope]
         }

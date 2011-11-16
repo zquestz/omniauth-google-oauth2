@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'omniauth-google-oauth2'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
+
   subject do
     OmniAuth::Strategies::GoogleOauth2.new(nil, @options || {})
   end
@@ -19,6 +20,23 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     it 'has correct token url' do
       subject.client.options[:token_url].should eq('/o/oauth2/token')
+    end
+  end
+
+  describe 'redirect_uri' do
+    before do
+      subject.stub(:callback_url).and_return('http://example.host/default')
+    end
+
+    it 'should be callback_url by default' do
+      subject.request_phase
+      subject.options[:authorize_params][:redirect_uri].should eql('http://example.host/default')
+    end
+    
+    it 'should be overriden by an option' do
+      subject.options[:redirect_uri] = 'http://example.host/override'
+      subject.request_phase
+      subject.options[:authorize_params][:redirect_uri].should eql('http://example.host/override')
     end
   end
 
