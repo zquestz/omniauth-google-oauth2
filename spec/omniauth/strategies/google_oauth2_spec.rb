@@ -22,6 +22,23 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe 'redirect_uri' do
+    before do
+      subject.stub(:callback_url).and_return('http://example.host/default')
+    end
+
+    it 'should be callback_url by default' do
+      subject.request_phase
+      subject.options[:authorize_params][:redirect_uri].should eql('http://example.host/default')
+    end
+    
+    it 'should be overriden by an option' do
+      subject.options[:redirect_uri] = 'http://example.host/override'
+      subject.request_phase
+      subject.options[:authorize_params][:redirect_uri].should eql('http://example.host/override')
+    end
+  end
+
   describe '#callback_path' do
     it "has the correct callback path" do
       subject.callback_path.should eq('/auth/google_oauth2/callback')
