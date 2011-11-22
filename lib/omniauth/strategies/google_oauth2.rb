@@ -2,7 +2,7 @@ require 'omniauth/strategies/oauth2'
 
 module OmniAuth
   module Strategies
-    class GoogleOAuth2 < OmniAuth::Strategies::OAuth2
+    class GoogleOauth2 < OmniAuth::Strategies::OAuth2
       option :name, 'google_oauth2'
 
       option :client_options, {
