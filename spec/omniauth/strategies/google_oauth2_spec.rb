@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'omniauth-google-oauth2'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
+
   subject do
     OmniAuth::Strategies::GoogleOauth2.new(nil, @options || {})
   end

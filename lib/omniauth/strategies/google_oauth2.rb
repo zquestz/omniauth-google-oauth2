@@ -28,33 +28,31 @@ module OmniAuth
         opts[:scope] << " https://#{google_email_scope}" unless opts[:scope] =~ %r[http[s]?:\/\/#{google_email_scope}]
         options[:authorize_params] = opts.merge(options[:authorize_params])
       end
-
+      
+      
       def auth_hash
         OmniAuth::Utils.deep_merge(super, {
-          'uid' => info['uid'],
-          'info' => info,
-          'credentials' => {'expires_at' => access_token.expires_at},
-          'extra' => {'user_hash' => user_data}
+          'uid' => user_info['uid'],
+          'info' => user_info,
+          'credentials' => {'expires_at' => @access_token.expires_at},
+          'extra' => {'user_hash' => email_data}
         })
       end
 
-      info do
-        if user_data['data']['isVerified']
-          email = user_data['data']['email'] rescue nil
-        else
-          email = nil
-        end
-
-        {
-          'email' => email,
-          'uid' => email,
-          'name' => email
-        }
+      def user_info
+        user_data.merge(name: user_data['displayName'])
       end
 
+      def email_data
+        @email_data ||=
+          @access_token.get("https://www.googleapis.com/userinfo/email?alt=json").parsed
+      end
+      
       def user_data
-        @data ||= access_token.get("https://www.googleapis.com/userinfo/email?alt=json").parsed
+        @user_data ||=
+          @access_token.get("https://www.googleapis.com/plus/v1/people/me?alt=json").parsed
       end
+      
     end
   end
 end
