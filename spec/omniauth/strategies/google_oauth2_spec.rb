@@ -22,34 +22,32 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
-  describe 'redirect_uri' do
-    before do
-      subject.stub(:callback_url).and_return('http://example.host/default')
-    end
-
-    it 'should be callback_url by default' do
-      subject.request_phase
-      subject.options[:authorize_params][:redirect_uri].should eql('http://example.host/default')
-    end
-    
-    it 'should be overriden by an option' do
-      subject.options[:redirect_uri] = 'http://example.host/override'
-      subject.request_phase
-      subject.options[:authorize_params][:redirect_uri].should eql('http://example.host/override')
-    end
-  end
-
   describe '#callback_path' do
     it "has the correct callback path" do
       subject.callback_path.should eq('/auth/google_oauth2/callback')
     end
   end
 
-  # These are setup during the request_phase
-  # At init they are blank
   describe '#authorize_params' do
-    it "has no authorize params at init" do
-      subject.authorize_params.should be_empty
+    it 'should expand scope shortcuts' do
+      @options = { :authorize_options => [:scope], :scope => 'userinfo.email'}
+      subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
+    end
+
+    it 'should leave full scopes as is' do
+      @options = { :authorize_options => [:scope], :scope => 'https://www.googleapis.com/auth/userinfo.profile'}
+      subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile')
+    end
+
+    it 'should join scopes' do
+      @options = { :authorize_options => [:scope], :scope => 'userinfo.profile,userinfo.email'}
+      subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+    end
+
+    it 'should set default scope to userinfo.email' do
+      @options = { :authorize_options => [:scope]}
+      subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
     end
   end
+
 end
