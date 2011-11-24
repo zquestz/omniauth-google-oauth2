@@ -5,7 +5,7 @@ module OmniAuth
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
 
       # Possible scopes: userinfo.email,userinfo.profile,plus.me
-      DEFAULT_SCOPE = "userinfo.email"
+      DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
 
@@ -24,12 +24,12 @@ module OmniAuth
         end
       end
 
-      uid{ raw_info['id'] }
+      uid{ raw_info['id'] || verified_email }
 
       info do
         prune!({
           :name       => raw_info['name'],
-          :email      => raw_info['verified_email'] ? raw_info['email'] : nil,
+          :email      => verified_email,
           :first_name => raw_info['given_name'],
           :last_name  => raw_info['family_name'],
           :image      => raw_info['picture']
@@ -53,6 +53,10 @@ module OmniAuth
           prune!(value) if value.is_a?(Hash)
           value.nil? || (value.respond_to?(:empty?) && value.empty?)
         end
+      end
+
+      def verified_email
+        raw_info['verified_email'] ? raw_info['email'] : nil
       end
 
     end

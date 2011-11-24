@@ -44,9 +44,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
     end
 
-    it 'should set default scope to userinfo.email' do
+    it 'should set default scope to userinfo.email,userinfo.profile' do
       @options = { :authorize_options => [:scope]}
-      subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
+      subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
     end
   end
 
