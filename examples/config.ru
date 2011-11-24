@@ -34,7 +34,6 @@ use Rack::Session::Cookie, :secret => ENV['RACK_COOKIE_SECRET']
 
 use OmniAuth::Builder do
   provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {
-    :scope => 'https://www.googleapis.com/auth/plus.me'
   }
 end
 
