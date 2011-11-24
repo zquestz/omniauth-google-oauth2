@@ -15,8 +15,8 @@ shared_examples 'an oauth2 strategy' do
     end
 
     it 'should include top-level options that are marked as :authorize_options' do
-      @options = { :authorize_options => [:scope, :foo], :scope => 'bar', :foo => 'baz' }
-      subject.authorize_params['scope'].should eq('bar')
+      @options = { :authorize_options => [:scope, :foo], :scope => 'http://bar', :foo => 'baz' }
+      subject.authorize_params['scope'].should eq('http://bar')
       subject.authorize_params['foo'].should eq('baz')
     end
   end
