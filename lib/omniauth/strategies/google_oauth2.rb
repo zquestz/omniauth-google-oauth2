@@ -21,6 +21,10 @@ module OmniAuth
           scopes = (params[:scope] || DEFAULT_SCOPE).split(",")
           scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
           params[:scope] = scopes.join(' ')
+          # This makes sure we get a refresh_token.
+          # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
+          params[:access_type] = 'offline'
+          params[:approval_prompt] = 'force'
         end
       end
 
