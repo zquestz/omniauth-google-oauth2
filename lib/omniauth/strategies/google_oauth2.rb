@@ -8,6 +8,7 @@ module OmniAuth
       DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
+      option :authorize_options, [:scope, :approval_prompt, :access_type]
 
       option :client_options, {
         :site          => 'https://accounts.google.com',
@@ -23,8 +24,8 @@ module OmniAuth
           params[:scope] = scopes.join(' ')
           # This makes sure we get a refresh_token.
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
-          params[:access_type] = 'offline'
-          params[:approval_prompt] = 'force'
+          params[:access_type] = 'offline' if params[:access_type].nil?
+          params[:approval_prompt] = 'force' if params[:approval_prompt].nil?
         end
       end
 
