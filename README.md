@@ -2,6 +2,8 @@
 
 Strategy to auth with Google via OAuth2 in OmniAuth.
 
+Get your API key at https://code.google.com/apis/console/
+
 ## License
 
 Copyright (c) 2011 by Josh Ellithorpe
