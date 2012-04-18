@@ -48,6 +48,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       @options = { :authorize_options => [:scope]}
       subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
     end
+
+     it 'should set the state parameter' do
+      @options = {:state => "some_state"}
+      subject.authorize_params['state'].should eq('some_state')
+    end
   end
 
 end
