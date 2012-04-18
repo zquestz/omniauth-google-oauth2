@@ -50,7 +50,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
      it 'should set the state parameter' do
-      @options = {:state => [:state], :state => "some_state"}
+      @options = {:state => "some_state"}
       subject.authorize_params['state'].should eq('some_state')
     end
   end
