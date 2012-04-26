@@ -26,6 +26,8 @@ module OmniAuth
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
           params[:access_type] = 'offline' if params[:access_type].nil?
           params[:approval_prompt] = 'force' if params[:approval_prompt].nil?
+          # overriding approval prompt on the request itself
+          params[:approval_prompt] = request.params['approval_prompt'] if (request.env && request.params && request.params['approval_prompt'])
         end
       end
 
