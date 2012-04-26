@@ -49,9 +49,16 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
     end
 
-     it 'should set the state parameter' do
+    it 'should set the state parameter' do
       @options = {:state => "some_state"}
       subject.authorize_params['state'].should eq('some_state')
+    end
+
+    it 'should allow request parameter to override approval_prompt' do
+      @options = {:approval_prompt => ''} # non-nil prevent default 'force'
+      # stub the request
+      subject.stub!(:request).and_return( Rack::Request.new( {'QUERY_STRING' => "approval_prompt=force", "rack.input" => ""}))
+      subject.authorize_params['approval_prompt'].should eq('force')
     end
   end
 
