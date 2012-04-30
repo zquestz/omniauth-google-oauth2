@@ -60,6 +60,16 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.stub!(:request).and_return( Rack::Request.new( {'QUERY_STRING' => "approval_prompt=force", "rack.input" => ""}))
       subject.authorize_params['approval_prompt'].should eq('force')
     end
+
+    it 'should include raw_info in extras hash by default' do
+      subject.stub(:raw_info) { { :foo => 'bar' } }
+      subject.extra[:raw_info].should eq({ :foo => 'bar' })
+    end
+
+    it 'should not include raw_info in extras hash when skip_info is specified' do
+      @options = { :skip_info => true }
+      subject.extra.should_not have_key(:raw_info)
+    end
   end
 
 end

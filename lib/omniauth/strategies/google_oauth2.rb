@@ -42,11 +42,11 @@ module OmniAuth
           :image      => raw_info['picture']
         })
       end
-
+      
       extra do
-        prune!({
-          'raw_info' => raw_info
-        })
+        hash = {}
+        hash[:raw_info] = raw_info unless skip_info?
+        prune! hash
       end
 
       def raw_info
