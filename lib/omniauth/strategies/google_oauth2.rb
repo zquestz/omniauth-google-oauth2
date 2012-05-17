@@ -21,6 +21,9 @@ module OmniAuth
         super.tap do |params|
           scopes = (params[:scope] || DEFAULT_SCOPE).split(",")
           scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
+          %w[ 
+            ].each { |v| params[v.to_sym] = request.params[v] if request.params[v] }
+          params[:state] = request.params["state"] if request.params["state"]
           params[:scope] = scopes.join(' ')
           # This makes sure we get a refresh_token.
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
