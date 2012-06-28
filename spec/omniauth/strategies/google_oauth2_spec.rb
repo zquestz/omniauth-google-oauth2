@@ -2,14 +2,14 @@ require 'spec_helper'
 require 'omniauth-google-oauth2'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
-  
+
   before :each do
     @request = double('Request')
     @request.stub(:params) { {} }
     @request.stub(:cookies) { {} }
     @request.stub(:env) { {} }
   end
-  
+
   subject do
     OmniAuth::Strategies::GoogleOauth2.new(nil, @options || {}).tap do |strategy|
       strategy.stub(:request) { @request }
@@ -38,7 +38,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
-  describe '#authorize_params' do 
+  describe '#authorize_params' do
     it 'should expand scope shortcuts' do
       @options = { :authorize_options => [:scope], :scope => 'userinfo.email'}
       subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
@@ -63,12 +63,12 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       @options = {:state => "some_state"}
       subject.authorize_params['state'].should eq('some_state')
     end
-    
+
     it 'should set the state parameter dynamically' do
       subject.stub(:request) { double('Request', {:params => { 'state' => 'some_state' }, :env => {}}) }
       subject.authorize_params['state'].should eq('some_state')
     end
-    
+
     it 'should allow request parameter to override approval_prompt' do
       @options = {:approval_prompt => ''} # non-nil prevent default 'force'
       # stub the request
@@ -84,6 +84,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     it 'should not include raw_info in extras hash when skip_info is specified' do
       @options = { :skip_info => true }
       subject.extra.should_not have_key(:raw_info)
+    end
+
+    it 'should set the hd (hosted domain) parameter if present' do
+      @options = {:hd => "example.com"}
+      subject.authorize_params['hd'].should eq('example.com')
     end
   end
 
