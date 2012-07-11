@@ -19,6 +19,10 @@ module OmniAuth
       def authorize_params
         base_scope_url = "https://www.googleapis.com/auth/"
         super.tap do |params|
+          # Read the params if passed directly to omniauth_authorize_path
+          %w(scope access_type approval_prompt hd).each do |k|
+            params[k.to_sym] = request.params[k] if request.params[k].present?
+          end
           scopes = (params[:scope] || DEFAULT_SCOPE).split(",")
           scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
           params[:scope] = scopes.join(' ')
