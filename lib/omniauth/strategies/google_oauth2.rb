@@ -8,7 +8,7 @@ module OmniAuth
       DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
-      option :authorize_options, [:scope, :approval_prompt, :access_type, :hd]
+      option :authorize_options, [:scope, :approval_prompt, :access_type, :state, :hd]
 
       option :client_options, {
         :site          => 'https://accounts.google.com',
@@ -30,6 +30,8 @@ module OmniAuth
           params[:approval_prompt] = request.params['approval_prompt'] if request_has_approval_prompt
           # hd ("Hosted Domain") can be set to a Google Apps domain to force a login to that domain
           params[:hd] = request.params['hd'] if request.params['hd']
+          # Override the state per request
+          session['omniauth.state'] = params[:state] = request.params['state'] if request.params['state']
         end
       end
 

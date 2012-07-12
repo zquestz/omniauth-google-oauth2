@@ -2,16 +2,23 @@ require 'spec_helper'
 require 'omniauth-google-oauth2'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
+  def app; lambda{|env| [200, {}, ["Hello."]]} end
 
   before :each do
+    OmniAuth.config.test_mode = true
     @request = double('Request')
     @request.stub(:params) { {} }
     @request.stub(:cookies) { {} }
     @request.stub(:env) { {} }
   end
 
+  after do
+    OmniAuth.config.test_mode = false
+  end
+
   subject do
-    OmniAuth::Strategies::GoogleOauth2.new(nil, @options || {}).tap do |strategy|
+    args = ['appid', 'secret', @options || {}].compact
+    OmniAuth::Strategies::GoogleOauth2.new(app, *args).tap do |strategy|
       strategy.stub(:request) { @request }
     end
   end
@@ -74,6 +81,18 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     it 'should not include raw_info in extras hash when skip_info is specified' do
       @options = { :skip_info => true }
       subject.extra.should_not have_key(:raw_info)
+    end
+
+    it 'should set the state parameter' do
+      @options = {:state => "some_state"}
+      subject.authorize_params['state'].should eq('some_state')
+      subject.session['omniauth.state'].should eq('some_state')
+    end
+
+    it 'should set the state parameter dynamically' do
+      subject.stub(:request) { double('Request', {:params => { 'state' => 'some_state' }, :env => {}}) }
+      subject.authorize_params['state'].should eq('some_state')
+      subject.session['omniauth.state'].should eq('some_state')
     end
 
     it 'should set the hd (hosted domain) parameter if present' do
