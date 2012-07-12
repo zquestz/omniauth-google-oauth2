@@ -4,6 +4,14 @@ require 'omniauth-google-oauth2'
 describe OmniAuth::Strategies::GoogleOauth2 do
   def app; lambda{|env| [200, {}, ["Hello."]]} end
 
+  before do
+    OmniAuth.config.test_mode = true
+  end
+
+  after do
+    OmniAuth.config.test_mode = false
+  end
+
   before :each do
     OmniAuth.config.test_mode = true
     @request = double('Request')
@@ -99,6 +107,15 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       @options = {:hd => "example.com"}
       subject.authorize_params['hd'].should eq('example.com')
     end
+
+    it 'should override the params when specified in the request' do
+      @options = {:scope => 'userinfo.profile'}
+      subject.stub_chain(:request, :params).and_return({
+        'scope' => 'http://www.google.com/m8/feeds',
+      })
+      subject.authorize_params['scope'].should eq('http://www.google.com/m8/feeds')
+    end
+
   end
 
 end
