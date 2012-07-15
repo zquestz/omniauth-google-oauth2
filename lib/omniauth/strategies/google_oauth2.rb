@@ -19,6 +19,10 @@ module OmniAuth
       def authorize_params
         base_scope_url = "https://www.googleapis.com/auth/"
         super.tap do |params|
+          # Read the params if passed directly to omniauth_authorize_path
+          %w(scope approval_prompt access_type state hd).each do |k|
+            params[k.to_sym] = request.params[k] unless [nil, ''].include?(request.params[k])
+          end
           scopes = (params[:scope] || DEFAULT_SCOPE).split(",")
           scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
           params[:scope] = scopes.join(' ')
@@ -26,12 +30,8 @@ module OmniAuth
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
           params[:access_type] = 'offline' if params[:access_type].nil?
           params[:approval_prompt] = 'force' if params[:approval_prompt].nil?
-          # allow overriding approval_prompt on the request itself
-          params[:approval_prompt] = request.params['approval_prompt'] if request_has_approval_prompt
-          # hd ("Hosted Domain") can be set to a Google Apps domain to force a login to that domain
-          params[:hd] = request.params['hd'] if request.params['hd']
           # Override the state per request
-          session['omniauth.state'] = params[:state] = request.params['state'] if request.params['state']
+          session['omniauth.state'] = params[:state] if request.params['state']
         end
       end
 
