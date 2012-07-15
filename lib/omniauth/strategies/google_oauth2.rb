@@ -59,10 +59,6 @@ module OmniAuth
 
       private
 
-      def request_has_approval_prompt
-        request.env && request.params && request.params['approval_prompt']
-      end
-
       def prune!(hash)
         hash.delete_if do |_, value|
           prune!(value) if value.is_a?(Hash)
