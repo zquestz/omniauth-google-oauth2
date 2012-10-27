@@ -54,6 +54,7 @@ module OmniAuth
       end
 
       def raw_info
+        return {} unless (options.scope || DEFAULT_SCOPE).index(/\Auserinfo/)
         @raw_info ||= access_token.get('https://www.googleapis.com/oauth2/v1/userinfo').parsed
       end
 
