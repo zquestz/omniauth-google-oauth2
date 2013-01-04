@@ -139,4 +139,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.extra.should_not have_key(:raw_info)
     end
   end
+
+  describe 'populate auth hash url' do
+    it 'should populate url map in auth hash if link present in raw_info' do
+      subject.stub(:raw_info) { { 'name' => 'Foo', 'link' => 'https://plus.google.com/123456' } }
+      subject.info[:urls]['Google'].should eq('https://plus.google.com/123456')
+    end
+
+    it 'should not populate url map in auth hash if no link present in raw_info' do
+      subject.stub(:raw_info) { { 'name' => 'Foo' } }
+      subject.info.should_not have_key(:urls)
+    end
+  end
+
 end
