@@ -24,7 +24,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
 end
 ```
 
-Auth Url is: /auth/google_auth2
+Auth Url is: /auth/google_oauth2
 
 ## License
 
