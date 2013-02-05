@@ -29,7 +29,7 @@ Auth Url is: /auth/google_oauth2
 ## Tips on the scope parameter
 
 * You don't need the https://www.googleapis.com/auth/ prefix.
-* You provide several a , separated list, without spaces.
+* You provide a comma separated list, without spaces. 
 * You need to give userinfo.email to get the email.
 
 ## License
