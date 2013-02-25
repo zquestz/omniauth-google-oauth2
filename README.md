@@ -2,9 +2,9 @@
 
 Strategy to authenticate with Google via OAuth2 in OmniAuth.
 
-Get your API key at: https://code.google.com/apis/console/ .
+Get your API key at: https://code.google.com/apis/console/
 
-For more details, read the Google docs: https://developers.google.com/accounts/docs/OAuth2 .
+For more details, read the Google docs: https://developers.google.com/accounts/docs/OAuth2
 
 ## Installation
 
@@ -26,7 +26,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
 end
 ```
 
-You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`.
+You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
 
 ## Configuration
 
