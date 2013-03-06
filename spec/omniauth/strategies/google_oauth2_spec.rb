@@ -46,9 +46,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe '#authorize_params' do
-    %w(approval_prompt access_type state hd).each do |k|
+    %w(approval_prompt access_type state hd any_other).each do |k|
       it "should set the #{k} authorize option dynamically in the request" do
-        @options = {k.to_sym => ''}
+        @options = {:authorize_options => [k.to_sym], k.to_sym => ''}
         subject.stub(:request) { double('Request', {:params => { k => 'something' }, :env => {}}) }
         subject.authorize_params[k].should eq('something')
       end
