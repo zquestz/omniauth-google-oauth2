@@ -22,7 +22,7 @@ Here's an example, adding the middleware to a Rails app in `config/initializers/
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :google_oauth2, ENV["GOOGLE_KEY"], ENV["GOOGLE_SECRET"]
+  provider OmniAuth::Strategies::GoogleOauth2, ENV["GOOGLE_KEY"], ENV["GOOGLE_SECRET"]
 end
 ```
 
@@ -42,7 +42,7 @@ Here's an example of a possible configuration where the user is asked for extra 
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :google_oauth2, ENV["GOOGLE_KEY"], ENV["GOOGLE_SECRET"],
+  provider OmniAuth::Strategies::GoogleOauth2, ENV["GOOGLE_KEY"], ENV["GOOGLE_SECRET"],
            {
              :scope => "userinfo.email,userinfo.profile,plus.me,http://gdata.youtube.com",
              :approval_prompt => "auto"
