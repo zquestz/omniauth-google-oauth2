@@ -8,6 +8,8 @@ require 'sinatra'
 require 'omniauth'
 require 'omniauth-google-oauth2'
 
+# Do not use for production code.
+# This is only to make setup easier when running through the sample.
 OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 class App < Sinatra::Base
