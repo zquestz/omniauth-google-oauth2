@@ -60,6 +60,18 @@ module OmniAuth
         @raw_info ||= access_token.get('https://www.googleapis.com/oauth2/v1/userinfo').parsed
       end
 
+      def build_access_token_with_access_token
+        if !request.params['id_token'].nil? &&
+            !request.params['access_token'].nil? &&
+            verify_token(request.params['id_token'], request.params['access_token'])
+          ::OAuth2::AccessToken.from_hash(client, request.params.dup)
+        else
+          build_access_token_without_access_token
+        end
+      end
+      alias_method :build_access_token_without_access_token, :build_access_token
+      alias :build_access_token :build_access_token_with_access_token
+
       private
 
       def prune!(hash)
@@ -71,6 +83,14 @@ module OmniAuth
 
       def verified_email
         raw_info['verified_email'] ? raw_info['email'] : nil
+      end
+
+      def verify_token(id_token, access_token)
+        # Verify id_token as well
+        # request fails and raises error when id_token or access_token is invalid
+        raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v2/tokeninfo',
+            params: {id_token: id_token, access_token: access_token}).parsed
+        raw_response['issued_to'] == options.client_id
       end
 
     end
