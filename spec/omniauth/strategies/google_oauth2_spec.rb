@@ -199,7 +199,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.send(:verify_token, 'valid_id_token', 'valid_access_token').should == true
     end
 
-    it 'should verify token if access_token and id_token are valid' do
+    it 'should not verify token if access_token and id_token are valid but app_id is false' do
       subject.send(:verify_token, 'valid_id_token', 'valid_access_token').should == false
     end
 
