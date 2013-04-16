@@ -152,4 +152,61 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe 'build_access_token' do
+    it 'should read access_token from hash' do
+      @request.stub(:params).and_return('id_token' => 'valid_id_token', 'access_token' => 'valid_access_token')
+      subject.should_receive(:verify_token).with('valid_id_token', 'valid_access_token').and_return true
+      subject.should_receive(:client).and_return(:client)
+
+      token = subject.build_access_token
+      token.should be_instance_of(::OAuth2::AccessToken)
+      token.token.should eq('valid_access_token')
+      token.client.should eq(:client)
+    end
+
+    it 'should call super' do
+      subject.should_receive(:build_access_token_without_access_token)
+      subject.build_access_token
+    end
+  end
+
+  describe 'verify_token' do
+    before(:each) do
+      subject.options.client_options[:connection_build] = proc do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v2/tokeninfo?id_token=valid_id_token&access_token=valid_access_token') do |env|
+            [200, {'Content-Type' => 'application/json; charset=UTF-8'}, MultiJson.encode(
+              :issued_to => '000000000000.apps.googleusercontent.com',
+              :audience => '000000000000.apps.googleusercontent.com',
+              :user_id => '000000000000000000000',
+              :scope => 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+              :expires_in => 3514,
+              :email => 'me@example.com',
+              :verified_email => true,
+              :access_type => 'online'
+            )]
+          end
+          stub.get('/oauth2/v2/tokeninfo?id_token=invalid_id_token&access_token=invalid_access_token') do |env|
+            [400, {'Content-Type' => 'application/json; charset=UTF-8'}, MultiJson.encode(:error_description => 'Invalid Value')]
+          end
+        end
+      end
+    end
+
+    it 'should verify token if access_token and id_token are valid and app_id equals' do
+      subject.options.client_id =  '000000000000.apps.googleusercontent.com'
+      subject.send(:verify_token, 'valid_id_token', 'valid_access_token').should == true
+    end
+
+    it 'should not verify token if access_token and id_token are valid but app_id is false' do
+      subject.send(:verify_token, 'valid_id_token', 'valid_access_token').should == false
+    end
+
+    it 'should raise error if access_token or id_token is invalid' do
+      expect {
+        subject.send(:verify_token, 'invalid_id_token', 'invalid_access_token')
+      }.to raise_error(OAuth2::Error)
+    end
+  end
 end
