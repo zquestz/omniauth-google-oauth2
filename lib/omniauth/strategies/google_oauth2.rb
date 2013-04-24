@@ -89,7 +89,7 @@ module OmniAuth
         # Verify id_token as well
         # request fails and raises error when id_token or access_token is invalid
         raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v2/tokeninfo',
-            params: {:id_token => id_token, :access_token => access_token}).parsed
+            :params => {:id_token => id_token, :access_token => access_token}).parsed
         raw_response['issued_to'] == options.client_id
       end
 
