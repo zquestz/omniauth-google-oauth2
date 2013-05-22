@@ -30,6 +30,7 @@ module OmniAuth
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
           params[:access_type] = 'offline' if params[:access_type].nil?
           params[:approval_prompt] = 'force' if params[:approval_prompt].nil?
+          params[:login_hint] = request[:login_hint] if request[:login_hint]
           # Override the state per request
           session['omniauth.state'] = params[:state] if request.params['state']
         end
