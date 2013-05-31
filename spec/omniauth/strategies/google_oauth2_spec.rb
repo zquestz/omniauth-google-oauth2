@@ -126,6 +126,13 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         subject.authorize_params['hd'].should eq('example.com')
       end
     end
+
+    describe 'login_hint' do
+      it 'should set the login_hint parameter if present' do
+        subject.stub(:request) { double('Request', {:params => { 'login_hint' => 'example@example.com' }, :env => {}}) }
+        subject.authorize_params['login_hint'].should eq('example@example.com')
+      end
+    end
   end
 
   describe 'raw info' do
