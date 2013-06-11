@@ -24,7 +24,10 @@ module OmniAuth
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
           scopes = (params[:scope] || DEFAULT_SCOPE).split(",")
-          scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
+          scopes.map! { |s| 
+	    s.strip!
+	    s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" 
+	  }
           params[:scope] = scopes.join(' ')
           # This makes sure we get a refresh_token.
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
