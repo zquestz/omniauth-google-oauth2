@@ -35,17 +35,23 @@ You can configure several options, which you pass in to the `provider` method vi
 * `scope`: A comma-separated list of permissions you want to request from the user. See the [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) for a full list of available permissions. Caveats:
   * The `userinfo.email` and `userinfo.profile` scopes are used by default. By defining your own `scope`, you override these defaults. If you need these scopes, don't forget to add them yourself!
   * Scopes starting with `https://www.googleapis.com/auth/` do not need that prefix specified. So while you should use the smaller scope `books` since that permission starts with the mentioned prefix, you should use the full scope URL `https://docs.google.com/feeds/` to access a user's docs, for example.
-* `approval_prompt`: Determines whether the user is always re-prompted for consent. It's set to `force` by default so a user sees a consent page even if he has previously allowed access a given set of scopes. Set this value to `auto` so that the user only sees the consent page the first time he authorizes a given set of scopes.
+* `prompt`: A space-delimited list of string values that determines whether the user is re-prompted for authentication and/or consent. Possible values are:
+  * `none`: No authentication or consent pages will be displayed; it will return an error if the user is not already authenticated and has not pre-configured consent for the requested scopes. This can be used as a method to check for existing authentication and/or consent.
+  * `consent`: The user will always be prompted for consent, even if he has previously allowed access a given set of scopes.
+  * `select_account`: The user will always be prompted to select a user account. This allows a user who has multiple current account sessions to select one amongst them.
+
+  If no value is specified, the user only sees the authentication page if he is not logged in and only sees the consent page the first time he authorizes a given set of scopes.
+
 * `access_type`: Defaults to `offline`, so a refresh token is sent to be used when the user is not present at the browser. Can be set to `online`.
 
-Here's an example of a possible configuration where the user is asked for extra permissions and is only prompted once for such permissions:
+Here's an example of a possible configuration where the user is asked for extra permissions and is always prompted to select his account when logging in:
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :google_oauth2, ENV["GOOGLE_KEY"], ENV["GOOGLE_SECRET"],
            {
              :scope => "userinfo.email, userinfo.profile, plus.me, http://gdata.youtube.com",
-             :approval_prompt => "auto"
+             :prompt => "consent select_account"
            }
 end
 ```
