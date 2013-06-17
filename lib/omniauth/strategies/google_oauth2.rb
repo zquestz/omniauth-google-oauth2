@@ -4,11 +4,11 @@ module OmniAuth
   module Strategies
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
 
-      # Possible scopes: userinfo.email,userinfo.profile,plus.me
       DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
-      option :authorize_options, [:scope, :approval_prompt, :access_type, :state, :hd, :request_visible_actions]
+
+      option :authorize_options, [:access_type, :hd, :prompt, :request_visible_actions, :scope, :state]
 
       option :client_options, {
         :site          => 'https://accounts.google.com',
@@ -23,23 +23,19 @@ module OmniAuth
           options[:authorize_options].each do |k|
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
-          scopes = (params[:scope] || DEFAULT_SCOPE).split(",")
-          scopes.map! { |s| 
-	    s.strip!
-	    s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" 
-	  }
+          scopes = (params[:scope] || DEFAULT_SCOPE).delete(' ').split(',')
+          scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
           params[:scope] = scopes.join(' ')
           # This makes sure we get a refresh_token.
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
           params[:access_type] = 'offline' if params[:access_type].nil?
-          params[:approval_prompt] = 'force' if params[:approval_prompt].nil?
           params[:login_hint] = request.params['login_hint'] if request.params['login_hint']
           # Override the state per request
           session['omniauth.state'] = params[:state] if request.params['state']
         end
       end
 
-      uid{ raw_info['id'] || verified_email }
+      uid { raw_info['id'] || verified_email }
 
       info do
         prune!({

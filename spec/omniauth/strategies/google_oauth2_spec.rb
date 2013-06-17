@@ -46,7 +46,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe '#authorize_params' do
-    %w(approval_prompt access_type state hd any_other).each do |k|
+    %w(access_type hd prompt state any_other).each do |k|
       it "should set the #{k} authorize option dynamically in the request" do
         @options = {:authorize_options => [k.to_sym], k.to_sym => ''}
         subject.stub(:request) { double('Request', {:params => { k => 'something' }, :env => {}}) }
@@ -70,6 +70,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
       end
 
+      it 'should deal with whitespace when joining scopes' do
+        @options = { :authorize_options => [:scope], :scope => 'userinfo.profile, userinfo.email'}
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+      end
+
       it 'should set default scope to userinfo.email,userinfo.profile' do
         @options = { :authorize_options => [:scope]}
         subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
@@ -82,15 +87,10 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
     end
 
-    describe 'approval_prompt' do
-      it 'should set the approval_prompt parameter if present' do
-        @options = {:approval_prompt => 'prompt'}
-        subject.authorize_params['approval_prompt'].should eq('prompt')
-      end
-
-      it 'should default to "force"' do
-        @options = {}
-        subject.authorize_params['approval_prompt'].should eq('force')
+    describe 'prompt' do
+      it 'should set the prompt parameter if present' do
+        @options = {:prompt => 'consent select_account'}
+        subject.authorize_params['prompt'].should eq('consent select_account')
       end
     end
 
