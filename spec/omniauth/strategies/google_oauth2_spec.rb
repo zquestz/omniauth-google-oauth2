@@ -159,6 +159,40 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe 'image options' do
+    it 'should return the image with width and height specified in the `image_size` option' do
+      @options = { :image_size => { :width => 50, :height => 50 } }
+      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
+      main_url, image_params = subject.info[:image].match(/^(.*)\/(.*)\/photo.jpg/).captures
+      image_params = image_params.split('-').inject({}) do |result, element|
+        result[element.slice!(0)] = element
+        result
+      end
+      main_url.should eq('https://lh3.googleusercontent.com/url')
+      image_params['w'].should eq('50')
+      image_params['h'].should eq('50')
+    end
+
+    it 'should return square image when `image_aspect_ratio` is specified' do
+      @options = { :image_aspect_ratio => 'square' }
+      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
+      main_url, image_params = subject.info[:image].match(/^(.*)\/(.*)\/photo.jpg/).captures
+      main_url.should eq('https://lh3.googleusercontent.com/url')
+      image_params.should eq('c')
+    end
+
+    it 'should not break if no picture present in raw_info' do
+      @options = { :image_aspect_ratio => 'square' }
+      subject.stub(:raw_info) { { 'name' => 'User Without Pic' } }
+      subject.info[:image].should be_nil
+    end
+
+    it 'should return original image if no options are provided' do
+      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
+      subject.info[:image].should eq('https://lh3.googleusercontent.com/url/photo.jpg')
+    end
+  end
+
   describe 'build_access_token' do
     it 'should read access_token from hash' do
       @request.stub(:params).and_return('id_token' => 'valid_id_token', 'access_token' => 'valid_access_token')
