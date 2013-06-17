@@ -4,7 +4,6 @@ module OmniAuth
   module Strategies
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
 
-      # Possible scopes: userinfo.email,userinfo.profile,plus.me
       DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
@@ -23,11 +22,8 @@ module OmniAuth
           options[:authorize_options].each do |k|
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
-          scopes = (params[:scope] || DEFAULT_SCOPE).split(",")
-          scopes.map! { |s| 
-	    s.strip!
-	    s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" 
-	  }
+          scopes = (params[:scope] || DEFAULT_SCOPE).delete(' ').split(',')
+          scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
           params[:scope] = scopes.join(' ')
           # This makes sure we get a refresh_token.
           # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
@@ -39,7 +35,7 @@ module OmniAuth
         end
       end
 
-      uid{ raw_info['id'] || verified_email }
+      uid { raw_info['id'] || verified_email }
 
       info do
         prune!({
