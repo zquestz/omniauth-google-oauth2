@@ -48,7 +48,7 @@ You can configure several options, which you pass in to the `provider` method vi
 
   Defaults to `original`.
 
-* `image_size`: A hash with keys `:width` and `:height` defining the size of the user's profile picture. If only `:width` or `:height` is specified, a picture whose width or height is closest to the requested size and requested aspect ratio will be returned. Defaults to the original width and height of the picture.
+* `image_size`: The size of the user's profile picture. The image returned will have width equal to the given value and variable height, according to the `image_aspect_ratio` chosen. Additionally, a picture with specific width and height can be request by setting this option to a hash with `:width` and `:height` as keys. If only `:width` or `:height` is specified, a picture whose width or height is closest to the requested size and requested aspect ratio will be returned. Defaults to the original width and height of the picture.
 
 * `access_type`: Defaults to `offline`, so a refresh token is sent to be used when the user is not present at the browser. Can be set to `online`.
 
@@ -61,9 +61,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
       :scope => "userinfo.email, userinfo.profile, plus.me, http://gdata.youtube.com",
       :prompt => "select_account",
       :image_aspect_ratio => "square",
-      :image_size => {
-        :width => 50
-      }
+      :image_size => 50
     }
 end
 ```

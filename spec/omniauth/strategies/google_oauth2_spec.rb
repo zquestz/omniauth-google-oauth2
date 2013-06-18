@@ -160,6 +160,14 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe 'image options' do
+    it 'should return the image with size specified in the `image_size` option' do
+      @options = { :image_size => 50 }
+      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
+      main_url, image_params = subject.info[:image].match(/^(.*)\/(.*)\/photo.jpg/).captures
+      main_url.should eq('https://lh3.googleusercontent.com/url')
+      image_params.should eq('s50')
+    end
+
     it 'should return the image with width and height specified in the `image_size` option' do
       @options = { :image_size => { :width => 50, :height => 50 } }
       subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }

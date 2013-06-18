@@ -90,7 +90,9 @@ module OmniAuth
         return original_url if original_url.nil? || (!options[:image_size] && !options[:image_aspect_ratio])
 
         image_params = []
-        if options[:image_size]
+        if options[:image_size].is_a?(Integer)
+          image_params << "s#{options[:image_size]}"
+        elsif options[:image_size].is_a?(Hash)
           image_params << "w#{options[:image_size][:width]}" if options[:image_size][:width]
           image_params << "h#{options[:image_size][:height]}" if options[:image_size][:height]
         end
