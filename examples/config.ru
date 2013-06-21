@@ -25,7 +25,7 @@ class App < Sinatra::Base
     content_type 'text/plain'
     request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
   end
-  
+
   get '/auth/failure' do
     content_type 'text/plain'
     request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
@@ -37,9 +37,9 @@ use Rack::Session::Cookie, :secret => ENV['RACK_COOKIE_SECRET']
 use OmniAuth::Builder do
   # Regular usage
   provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {}
-  
+
   # Custom scope supporting youtube
-  # provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {:scope => 'http://gdata.youtube.com,userinfo.email,userinfo.profile,plus.me', :access_type => 'online', :approval_prompt => ''}
+  # provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {:scope => 'http://gdata.youtube.com,userinfo.email,userinfo.profile,plus.me', :access_type => 'offline', :prompt => ''}
 end
 
 run App.new
