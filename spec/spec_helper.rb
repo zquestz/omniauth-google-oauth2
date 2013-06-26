@@ -1,7 +1,9 @@
-require 'bundler/setup'
+require File.join('bundler', 'setup')
 require 'rspec'
 
-Dir[File.expand_path('../support/**/*', __FILE__)].each { |f| require f }
+Dir[File.expand_path(File.join('..', 'support', '**', '*'), __FILE__)].each do |f|
+  require f
+end
 
 RSpec.configure do |config|
 end
