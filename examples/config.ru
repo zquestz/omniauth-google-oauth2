@@ -10,6 +10,9 @@ require 'omniauth-google-oauth2'
 
 # Do not use for production code.
 # This is only to make setup easier when running through the sample.
+#
+# If you do have issues with certs in production code, this could help:
+# http://railsapps.github.io/openssl-certificate-verify-failed.html
 OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 class App < Sinatra::Base
@@ -35,11 +38,8 @@ end
 use Rack::Session::Cookie, :secret => ENV['RACK_COOKIE_SECRET']
 
 use OmniAuth::Builder do
-  # Regular usage
+  # For additional provider examples please look at 'omni_auth.rb'
   provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {}
-
-  # Custom scope supporting youtube
-  # provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {:scope => 'http://gdata.youtube.com,userinfo.email,userinfo.profile,plus.me', :access_type => 'offline', :prompt => ''}
 end
 
 run App.new
