@@ -1,1 +1,1 @@
-require "omniauth/google_oauth2"
+require File.join('omniauth', 'google_oauth2')
