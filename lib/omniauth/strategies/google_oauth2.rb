@@ -3,12 +3,12 @@ require 'omniauth/strategies/oauth2'
 module OmniAuth
   module Strategies
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
-
+      BASE_SCOPE_URL = "https://www.googleapis.com/auth/"
       DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
 
-      option :authorize_options, [:access_type, :hd, :prompt, :request_visible_actions, :scope, :state]
+      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :scope, :state]
 
       option :client_options, {
         :site          => 'https://accounts.google.com',
@@ -17,22 +17,19 @@ module OmniAuth
       }
 
       def authorize_params
-        base_scope_url = "https://www.googleapis.com/auth/"
         super.tap do |params|
-          # Read the params if passed directly to omniauth_authorize_path
           options[:authorize_options].each do |k|
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
-          scopes = (params[:scope] || DEFAULT_SCOPE).delete(' ').split(',')
-          scopes.map! { |s| s =~ /^https?:\/\// ? s : "#{base_scope_url}#{s}" }
-          params[:scope] = scopes.join(' ')
-          # This makes sure we get a refresh_token.
-          # http://googlecode.blogspot.com/2011/10/upcoming-changes-to-oauth-20-endpoint.html
+
+          raw_scope = params[:scope] || DEFAULT_SCOPE
+          scope_list = raw_scope.split(" ").map {|item| item.split(",")}.flatten
+          scope_list.map! { |s| s =~ /^https?:\/\// ? s : "#{BASE_SCOPE_URL}#{s}" }
+          params[:scope] = scope_list.join(" ")
+
           params[:access_type] = 'offline' if params[:access_type].nil?
-          params[:login_hint] = request.params['login_hint'] if request.params['login_hint']
-          params[:prompt] = request.params['prompt'] if request.params['prompt']
-          # Override the state per request
-          session['omniauth.state'] = params[:state] if request.params['state']
+
+          session['omniauth.state'] = params[:state] if params['state']
         end
       end
 
@@ -61,24 +58,22 @@ module OmniAuth
         @raw_info ||= access_token.get('https://www.googleapis.com/oauth2/v1/userinfo').parsed
       end
 
-      def build_access_token_with_access_token
-        if !request.params['id_token'].nil? &&
-            !request.params['access_token'].nil? &&
-            verify_token(request.params['id_token'], request.params['access_token'])
+      def custom_build_access_token
+        if verify_token(request.params['id_token'], request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         else
-          build_access_token_without_access_token
+          orig_build_access_token
         end
       end
-      alias_method :build_access_token_without_access_token, :build_access_token
-      alias :build_access_token :build_access_token_with_access_token
+      alias_method :orig_build_access_token, :build_access_token
+      alias :build_access_token :custom_build_access_token
 
       private
 
       def prune!(hash)
-        hash.delete_if do |_, value|
-          prune!(value) if value.is_a?(Hash)
-          value.nil? || (value.respond_to?(:empty?) && value.empty?)
+        hash.delete_if do |_, v|
+          prune!(v) if v.is_a?(Hash)
+          v.nil? || (v.respond_to?(:empty?) && v.empty?)
         end
       end
 
@@ -100,17 +95,18 @@ module OmniAuth
         image_params << 'c' if options[:image_aspect_ratio] == 'square'
 
         params_index = original_url.index('/photo.jpg')
-        original_url.insert(params_index, '/'+image_params.join('-'))
+        original_url.insert(params_index, ('/' + image_params.join('-')))
       end
 
       def verify_token(id_token, access_token)
-        # Verify id_token as well
-        # request fails and raises error when id_token or access_token is invalid
-        raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v2/tokeninfo',
-            :params => {:id_token => id_token, :access_token => access_token}).parsed
+        return false unless (id_token && access_token)
+
+        raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v2/tokeninfo', :params => {
+          :id_token => id_token,
+          :access_token => access_token
+        }).parsed
         raw_response['issued_to'] == options.client_id
       end
-
     end
   end
 end

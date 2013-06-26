@@ -2,107 +2,146 @@ require 'spec_helper'
 require 'omniauth-google-oauth2'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
-  def app; lambda{|env| [200, {}, ["Hello."]]} end
+  let(:request) { double('Request', :params => {}, :cookies => {}, :env => {}) }
+  let(:app) {
+    lambda do
+      [200, {}, ["Hello."]]
+    end
+  }
 
-  before :each do
+  subject do
+    OmniAuth::Strategies::GoogleOauth2.new(app, 'appid', 'secret', @options || {}).tap do |strategy|
+      strategy.stub(:request) {
+        request
+      }
+    end
+  end
+
+  before do
     OmniAuth.config.test_mode = true
-    @request = double('Request')
-    @request.stub(:params) { {} }
-    @request.stub(:cookies) { {} }
-    @request.stub(:env) { {} }
   end
 
   after do
     OmniAuth.config.test_mode = false
   end
 
-  subject do
-    args = ['appid', 'secret', @options || {}].compact
-    OmniAuth::Strategies::GoogleOauth2.new(app, *args).tap do |strategy|
-      strategy.stub(:request) { @request }
-    end
-  end
-
-  it_should_behave_like 'an oauth2 strategy'
-
-  describe '#client' do
-    it 'has correct Google site' do
+  describe '#client_options' do
+    it 'has correct site' do
       subject.client.site.should eq('https://accounts.google.com')
     end
 
-    it 'has correct authorize url' do
+    it 'has correct authorize_url' do
       subject.client.options[:authorize_url].should eq('/o/oauth2/auth')
     end
 
-    it 'has correct token url' do
+    it 'has correct token_url' do
       subject.client.options[:token_url].should eq('/o/oauth2/token')
     end
-  end
 
-  describe '#callback_path' do
-    it 'has the correct callback path' do
-      subject.callback_path.should eq('/auth/google_oauth2/callback')
-    end
-  end
+    describe "overrides" do
+      it 'should allow overriding the site' do
+        @options = {:client_options => {'site' => 'https://example.com'}}
+        subject.client.site.should == 'https://example.com'
+      end
 
-  describe '#authorize_params' do
-    %w(access_type hd prompt state any_other).each do |k|
-      it "should set the #{k} authorize option dynamically in the request" do
-        @options = {:authorize_options => [k.to_sym], k.to_sym => ''}
-        subject.stub(:request) { double('Request', {:params => { k => 'something' }, :env => {}}) }
-        subject.authorize_params[k].should eq('something')
+      it 'should allow overriding the authorize_url' do
+        @options = {:client_options => {'authorize_url' => 'https://example.com'}}
+        subject.client.options[:authorize_url].should == 'https://example.com'
+      end
+
+      it 'should allow overriding the token_url' do
+        @options = {:client_options => {'token_url' => 'https://example.com'}}
+        subject.client.options[:token_url].should == 'https://example.com'
       end
     end
+  end
 
-    describe 'scope' do
-      it 'should expand scope shortcuts' do
-        @options = { :authorize_options => [:scope], :scope => 'userinfo.email'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
+  describe "#authorize_options" do
+    [:access_type, :hd, :login_hint, :prompt, :scope, :state].each do |k|
+      it "should support #{k}" do
+        @options = {k => 'http://someval'}
+        subject.authorize_params[k.to_s].should eq('http://someval')
+      end
+    end
+
+    describe 'access_type' do
+      it 'should default to "offline"' do
+        @options = {}
+        subject.authorize_params['access_type'].should eq('offline')
       end
 
-      it 'should leave full scopes as is' do
-        @options = { :authorize_options => [:scope], :scope => 'https://www.googleapis.com/auth/userinfo.profile'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile')
+      it 'should set the access_type parameter if present' do
+        @options = {:access_type => 'online'}
+        subject.authorize_params['access_type'].should eq('online')
+      end
+    end
+
+    describe 'hd' do
+      it "should default to nil" do
+        subject.authorize_params['hd'].should eq(nil)
       end
 
-      it 'should join scopes' do
-        @options = { :authorize_options => [:scope], :scope => 'userinfo.profile,userinfo.email'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+      it 'should set the hd (hosted domain) parameter if present' do
+        @options = {:hd => 'example.com'}
+        subject.authorize_params['hd'].should eq('example.com')
+      end
+    end
+
+    describe 'login_hint' do
+      it "should default to nil" do
+        subject.authorize_params['login_hint'].should eq(nil)
       end
 
-      it 'should deal with whitespace when joining scopes' do
-        @options = { :authorize_options => [:scope], :scope => 'userinfo.profile, userinfo.email'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
-      end
-
-      it 'should set default scope to userinfo.email,userinfo.profile' do
-        @options = { :authorize_options => [:scope]}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
-      end
-
-      it 'should dynamically set the scope in the request' do
-        @options = {:scope => 'http://example.com'}
-        subject.stub(:request) { double('Request', {:params => { 'scope' => 'userinfo.email' }, :env => {}}) }
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
+      it 'should set the login_hint parameter if present' do
+        @options = {:login_hint => 'john@example.com'}
+        subject.authorize_params['login_hint'].should eq('john@example.com')
       end
     end
 
     describe 'prompt' do
+      it "should default to nil" do
+        subject.authorize_params['prompt'].should eq(nil)
+      end
+
       it 'should set the prompt parameter if present' do
         @options = {:prompt => 'consent select_account'}
         subject.authorize_params['prompt'].should eq('consent select_account')
       end
     end
 
-    describe 'access_type' do
-      it 'should set the access_type parameter if present' do
-        @options = {:access_type => 'type'}
-        subject.authorize_params['access_type'].should eq('type')
+    describe 'scope' do
+      it 'should expand scope shortcuts' do
+        @options = {:scope => 'userinfo.email'}
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
       end
 
-      it 'should default to "offline"' do
-        @options = {}
-        subject.authorize_params['access_type'].should eq('offline')
+      it 'should leave full scopes as is' do
+        @options = {:scope => 'https://www.googleapis.com/auth/userinfo.profile'}
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile')
+      end
+
+      it 'should join scopes' do
+        @options = {:scope => 'userinfo.profile,userinfo.email'}
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+      end
+
+      it 'should deal with whitespace when joining scopes' do
+        @options = {:scope => 'userinfo.profile, userinfo.email'}
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+      end
+
+      it 'should set default scope to userinfo.email,userinfo.profile' do
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
+      end
+
+      it 'should support space delimited scopes' do
+        @options = {:scope => 'userinfo.profile userinfo.email'}
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+      end
+
+      it "should support extremely badly formed scopes" do
+        @options = {:scope => 'userinfo.profile userinfo.email,foo,steve yeah http://example.com'}
+        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/foo https://www.googleapis.com/auth/steve https://www.googleapis.com/auth/yeah http://example.com')
       end
     end
 
@@ -114,96 +153,151 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
 
       it 'should set the omniauth.state dynamically' do
-        subject.stub(:request) { double('Request', {:params => { 'state' => 'some_state' }, :env => {}}) }
+        subject.stub(:request) { double('Request', {:params => {'state' => 'some_state'}, :env => {}}) }
         subject.authorize_params['state'].should eq('some_state')
         subject.session['omniauth.state'].should eq('some_state')
       end
     end
 
-    describe 'hd' do
-      it 'should set the hd (hosted domain) parameter if present' do
-        @options = {:hd => 'example.com'}
-        subject.authorize_params['hd'].should eq('example.com')
+    describe "overrides" do
+      it 'should include top-level options that are marked as :authorize_options' do
+        @options = {:authorize_options => [:scope, :foo, :request_visible_actions], :scope => 'http://bar', :foo => 'baz', :hd => "wow", :request_visible_actions => "something"}
+        subject.authorize_params['scope'].should eq('http://bar')
+        subject.authorize_params['foo'].should eq('baz')
+        subject.authorize_params['hd'].should eq(nil)
+        subject.authorize_params['request_visible_actions'].should eq('something')
+      end
+
+      describe "request overrides" do
+        [:access_type, :hd, :login_hint, :prompt, :scope, :state].each do |k|
+          context "authorize option #{k}" do
+            let(:request) { double('Request', :params => {k.to_s => 'http://example.com'}, :cookies => {}, :env => {}) }
+
+            it "should set the #{k} authorize option dynamically in the request" do
+              @options = {k => ''}
+              subject.authorize_params[k.to_s].should eq('http://example.com')
+            end
+          end
+        end
+
+        describe "custom authorize_options" do
+          let(:request) { double('Request', :params => {'foo' => 'something'}, :cookies => {}, :env => {}) }
+
+          it "should support request overrides from custom authorize_options" do
+            @options = {:authorize_options => [:foo], :foo => ''}
+            subject.authorize_params['foo'].should eq('something')
+          end
+        end
       end
     end
+  end
 
-    describe 'login_hint' do
-      it 'should set the login_hint parameter if present' do
-        subject.stub(:request) { double('Request', {:params => { 'login_hint' => 'example@example.com' }, :env => {}}) }
-        subject.authorize_params['login_hint'].should eq('example@example.com')
-      end
+  describe '#authorize_params' do
+    it 'should include any authorize params passed in the :authorize_params option' do
+      @options = {:authorize_params => {:request_visible_actions => 'something', :foo => 'bar', :baz => 'zip'}, :hd => 'wow', :bad => 'not_included'}
+      subject.authorize_params['request_visible_actions'].should eq('something')
+      subject.authorize_params['foo'].should eq('bar')
+      subject.authorize_params['baz'].should eq('zip')
+      subject.authorize_params['hd'].should eq('wow')
+      subject.authorize_params['bad'].should eq(nil)
+    end
+  end
+
+  describe '#token_params' do
+    it 'should include any token params passed in the :token_params option' do
+      @options = {:token_params => {:foo => 'bar', :baz => 'zip'}}
+      subject.token_params['foo'].should eq('bar')
+      subject.token_params['baz'].should eq('zip')
+    end
+  end
+
+  describe "#token_options" do
+    it 'should include top-level options that are marked as :token_options' do
+      @options = {:token_options => [:scope, :foo], :scope => 'bar', :foo => 'baz', :bad => 'not_included'}
+      subject.token_params['scope'].should eq('bar')
+      subject.token_params['foo'].should eq('baz')
+      subject.token_params['bad'].should eq(nil)
+    end
+  end
+
+  describe '#callback_path' do
+    it 'has the correct callback path' do
+      subject.callback_path.should eq('/auth/google_oauth2/callback')
     end
   end
 
   describe 'raw info' do
     it 'should include raw_info in extras hash by default' do
-      subject.stub(:raw_info) { { :foo => 'bar' } }
-      subject.extra[:raw_info].should eq({ :foo => 'bar' })
+      subject.stub(:raw_info) { {:foo => 'bar'} }
+      subject.extra[:raw_info].should eq({:foo => 'bar'})
     end
 
     it 'should not include raw_info in extras hash when skip_info is specified' do
-      @options = { :skip_info => true }
+      @options = {:skip_info => true}
       subject.extra.should_not have_key(:raw_info)
     end
   end
 
-  describe 'populate auth hash url' do
+  describe 'populate auth hash urls' do
     it 'should populate url map in auth hash if link present in raw_info' do
-      subject.stub(:raw_info) { { 'name' => 'Foo', 'link' => 'https://plus.google.com/123456' } }
+      subject.stub(:raw_info) { {'name' => 'Foo', 'link' => 'https://plus.google.com/123456'} }
       subject.info[:urls]['Google'].should eq('https://plus.google.com/123456')
     end
 
     it 'should not populate url map in auth hash if no link present in raw_info' do
-      subject.stub(:raw_info) { { 'name' => 'Foo' } }
+      subject.stub(:raw_info) { {'name' => 'Foo'} }
       subject.info.should_not have_key(:urls)
     end
   end
 
   describe 'image options' do
-    it 'should return the image with size specified in the `image_size` option' do
-      @options = { :image_size => 50 }
-      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-      main_url, image_params = subject.info[:image].match(/^(.*)\/(.*)\/photo.jpg/).captures
-      main_url.should eq('https://lh3.googleusercontent.com/url')
-      image_params.should eq('s50')
-    end
-
-    it 'should return the image with width and height specified in the `image_size` option' do
-      @options = { :image_size => { :width => 50, :height => 50 } }
-      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-      main_url, image_params = subject.info[:image].match(/^(.*)\/(.*)\/photo.jpg/).captures
-      image_params = image_params.split('-').inject({}) do |result, element|
-        result[element.slice!(0)] = element
-        result
-      end
-      main_url.should eq('https://lh3.googleusercontent.com/url')
-      image_params['w'].should eq('50')
-      image_params['h'].should eq('50')
-    end
-
-    it 'should return square image when `image_aspect_ratio` is specified' do
-      @options = { :image_aspect_ratio => 'square' }
-      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-      main_url, image_params = subject.info[:image].match(/^(.*)\/(.*)\/photo.jpg/).captures
-      main_url.should eq('https://lh3.googleusercontent.com/url')
-      image_params.should eq('c')
-    end
-
-    it 'should not break if no picture present in raw_info' do
-      @options = { :image_aspect_ratio => 'square' }
-      subject.stub(:raw_info) { { 'name' => 'User Without Pic' } }
+    it "should have no image if a picture isn't present" do
+      @options = {:image_aspect_ratio => 'square'}
+      subject.stub(:raw_info) { {'name' => 'User Without Pic'} }
       subject.info[:image].should be_nil
     end
 
+    describe "when a picture is returned from google" do
+      it 'should return the image with size specified in the `image_size` option' do
+        @options = {:image_size => 50}
+        subject.stub(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
+        subject.info[:image].should eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
+      end
+
+      it 'should return the image with width and height specified in the `image_size` option' do
+        @options = {:image_size => {:width => 50, :height => 40}}
+        subject.stub(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
+        subject.info[:image].should eq('https://lh3.googleusercontent.com/url/w50-h40/photo.jpg')
+      end
+
+      it 'should return square image when `image_aspect_ratio` is specified' do
+        @options = {:image_aspect_ratio => 'square'}
+        subject.stub(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
+        subject.info[:image].should eq('https://lh3.googleusercontent.com/url/c/photo.jpg')
+      end
+
+      it 'should return square sized image when `image_aspect_ratio` and `image_size` is set' do
+        @options = {:image_aspect_ratio => 'square', :image_size => 50}
+        subject.stub(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
+        subject.info[:image].should eq('https://lh3.googleusercontent.com/url/s50-c/photo.jpg')
+      end
+
+      it 'should return square sized image when `image_aspect_ratio` and `image_size` has height and width' do
+        @options = {:image_aspect_ratio => 'square', :image_size => {:width => 50, :height => 40}}
+        subject.stub(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
+        subject.info[:image].should eq('https://lh3.googleusercontent.com/url/w50-h40-c/photo.jpg')
+      end
+    end
+
     it 'should return original image if no options are provided' do
-      subject.stub(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
+      subject.stub(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
       subject.info[:image].should eq('https://lh3.googleusercontent.com/url/photo.jpg')
     end
   end
 
   describe 'build_access_token' do
     it 'should read access_token from hash' do
-      @request.stub(:params).and_return('id_token' => 'valid_id_token', 'access_token' => 'valid_access_token')
+      request.stub(:params).and_return('id_token' => 'valid_id_token', 'access_token' => 'valid_access_token')
       subject.should_receive(:verify_token).with('valid_id_token', 'valid_access_token').and_return true
       subject.should_receive(:client).and_return(:client)
 
@@ -214,7 +308,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     it 'should call super' do
-      subject.should_receive(:build_access_token_without_access_token)
+      subject.should_receive(:orig_build_access_token)
       subject.build_access_token
     end
   end
@@ -244,7 +338,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     it 'should verify token if access_token and id_token are valid and app_id equals' do
-      subject.options.client_id =  '000000000000.apps.googleusercontent.com'
+      subject.options.client_id = '000000000000.apps.googleusercontent.com'
       subject.send(:verify_token, 'valid_id_token', 'valid_access_token').should == true
     end
 
