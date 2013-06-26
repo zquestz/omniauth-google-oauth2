@@ -18,7 +18,7 @@ Then `bundle install`.
 
 ## Usage
 
-Here's an example, adding the middleware to a Rails app in `config/initializers/omniauth.rb`:
+Here's an example for adding the middleware to a Rails app in `config/initializers/omniauth.rb`:
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
@@ -27,6 +27,8 @@ end
 ```
 
 You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
+
+Fore more examples please check out `examples/omni_auth.rb`
 
 ## Configuration
 
