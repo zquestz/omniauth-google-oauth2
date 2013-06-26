@@ -148,7 +148,7 @@ end
 Detailed example at https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview#google-oauth2-example
 
 ## Build Status
-[Current Build Status](https://travis-ci.org/zquestz/omniauth-google-oauth2.png?branch=master)
+![Current Build Status](https://travis-ci.org/zquestz/omniauth-google-oauth2.png?branch=master)
 
 ## License
 
