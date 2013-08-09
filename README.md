@@ -52,7 +52,7 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `image_size`: The size of the user's profile picture. The image returned will have width equal to the given value and variable height, according to the `image_aspect_ratio` chosen. Additionally, a picture with specific width and height can be request by setting this option to a hash with `:width` and `:height` as keys. If only `:width` or `:height` is specified, a picture whose width or height is closest to the requested size and requested aspect ratio will be returned. Defaults to the original width and height of the picture.
 
-* `access_type`: Defaults to `offline`, so a refresh token is sent to be used when the user is not present at the browser. Can be set to `online`.
+* `access_type`: Defaults to `offline`, so a refresh token is sent to be used when the user is not present at the browser. Can be set to `online`. Note that if you need a refresh token, google requires you to also to specify the option `prompt: 'select_account consent'`, which is not a default.
 
 Here's an example of a possible configuration where the user is asked for extra permissions, the user is always prompted to select his account when logging in and the user's profile picture is returned as a thumbnail:
 
