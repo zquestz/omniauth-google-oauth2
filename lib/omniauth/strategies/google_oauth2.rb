@@ -8,7 +8,7 @@ module OmniAuth
 
       option :name, 'google_oauth2'
 
-      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :scope, :state]
+      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :scope, :state, :redirect_uri]
 
       option :client_options, {
         :site          => 'https://accounts.google.com',
@@ -26,7 +26,6 @@ module OmniAuth
           scope_list = raw_scope.split(" ").map {|item| item.split(",")}.flatten
           scope_list.map! { |s| s =~ /^https?:\/\// ? s : "#{BASE_SCOPE_URL}#{s}" }
           params[:scope] = scope_list.join(" ")
-
           params[:access_type] = 'offline' if params[:access_type].nil?
 
           session['omniauth.state'] = params[:state] if params['state']

@@ -64,6 +64,18 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
     end
 
+    describe "redirect_uri" do
+      it 'should default to nil' do
+        @options = {}
+        subject.authorize_params['redirect_uri'].should eq(nil)
+      end
+
+      it 'should set the redirect_uri parameter if present' do
+        @options = {:redirect_uri => 'https://example.com'}
+        subject.authorize_params['redirect_uri'].should eq('https://example.com')
+      end
+    end
+
     describe 'access_type' do
       it 'should default to "offline"' do
         @options = {}
