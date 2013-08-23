@@ -7,6 +7,8 @@ module OmniAuth
       DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
+      
+      option :skip_friends, true
 
       option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :scope, :state, :redirect_uri]
 
@@ -50,11 +52,16 @@ module OmniAuth
       extra do
         hash = {}
         hash[:raw_info] = raw_info unless skip_info?
+        hash[:raw_friend_info] = raw_friend_info(raw_info['id']) unless skip_info? || options[:skip_friends]
         prune! hash
       end
 
       def raw_info
         @raw_info ||= access_token.get('https://www.googleapis.com/oauth2/v1/userinfo').parsed
+      end
+
+      def raw_friend_info(id)
+        @raw_friend_info ||= access_token.get("https://www.googleapis.com/plus/v1/people/#{id}/people/visible").parsed
       end
 
       def custom_build_access_token
