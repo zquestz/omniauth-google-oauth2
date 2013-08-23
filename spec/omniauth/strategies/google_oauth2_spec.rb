@@ -250,6 +250,25 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe 'raw friend info' do
+    it 'should not include raw friend info in extras hash by default' do
+      subject.stub(:raw_info) { {:id => '12345'} }
+      subject.extra.should_not have_key(:raw_friend_info)
+    end
+
+    it 'should not include raw friend info in extras hash when skip_info is specified to true' do
+      @options = {:skip_info => true, :skip_friends => false}
+      subject.extra.should_not have_key(:raw_friend_info)
+    end
+
+    it 'should include raw friend info in extras hash when skip_friend_info is specified to false' do
+      @options = {:skip_friends => false}
+      subject.stub(:raw_info) { {:id => '12345'} }
+      subject.stub(:raw_friend_info) { [{:foo => 'bar'}] }
+      subject.extra[:raw_friend_info].should eq([{:foo => 'bar'}])
+    end
+  end
+
   describe 'populate auth hash urls' do
     it 'should populate url map in auth hash if link present in raw_info' do
       subject.stub(:raw_info) { {'name' => 'Foo', 'link' => 'https://plus.google.com/123456'} }
