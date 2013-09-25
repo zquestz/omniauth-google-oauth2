@@ -388,6 +388,12 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40-c/photo.jpg')
       end
+
+      it 'should return original image if image url does not end in `photo.jpg`' do
+        @options = {:image_size => 50}
+        subject.stub(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photograph.jpg'} }
+        subject.info[:image].should eq('https://lh3.googleusercontent.com/url/photograph.jpg')
+      end
     end
 
     it 'should return original image if no options are provided' do
