@@ -51,6 +51,7 @@ module OmniAuth
 
       extra do
         hash = {}
+        hash[:id_token] = access_token['id_token']
         hash[:raw_info] = raw_info unless skip_info?
         hash[:raw_friend_info] = raw_friend_info(raw_info['id']) unless skip_info? || options[:skip_friends]
         prune! hash

@@ -250,7 +250,23 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
     let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
 
-    before { subject.stub(access_token: access_token) }
+    before { subject.stub(:access_token => access_token) }
+
+    describe 'id_token' do
+      context 'when the id_token is passed into the access token' do
+       let(:access_token) { OAuth2::AccessToken.from_hash(client, {'id_token' => 'xyz'}) }
+
+        it 'should include id_token when set on the access_token' do
+          subject.extra.should include(:id_token => 'xyz')
+        end
+      end
+
+      context 'when the id_token is missing' do
+        it 'should not include id_token' do
+          subject.extra.should_not have_key(:id_token)
+        end
+      end
+    end
 
     describe 'raw_info' do
       context 'when skip_info is true' do
@@ -294,7 +310,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
           before { subject.options[:skip_friends] = false }
 
           it 'should not include raw_friend_info' do
-            subject.extra[:raw_friend_info].should eq([{"foo" => 'bar'}])
+            subject.extra[:raw_friend_info].should eq([{'foo' => 'bar'}])
           end
         end
       end
