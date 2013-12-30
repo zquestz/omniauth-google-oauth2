@@ -238,34 +238,82 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
-  describe 'raw info' do
-    it 'should include raw_info in extras hash by default' do
-      subject.stub(:raw_info) { {:foo => 'bar'} }
-      subject.extra[:raw_info].should eq({:foo => 'bar'})
+  describe '#extra' do
+    let(:client) do
+      OAuth2::Client.new('abc', 'def') do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v1/userinfo') {|env| [200, {'content-type' => 'application/json'}, '{"id": "12345"}']}
+          stub.get('/plus/v1/people/12345/people/visible') {|env| [200, {'content-type' => 'application/json'}, '[{"foo":"bar"}]']}
+        end
+      end
+    end
+    let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
+
+    before { subject.stub(:access_token => access_token) }
+
+    describe 'id_token' do
+      context 'when the id_token is passed into the access token' do
+       let(:access_token) { OAuth2::AccessToken.from_hash(client, {'id_token' => 'xyz'}) }
+
+        it 'should include id_token when set on the access_token' do
+          subject.extra.should include(:id_token => 'xyz')
+        end
+      end
+
+      context 'when the id_token is missing' do
+        it 'should not include id_token' do
+          subject.extra.should_not have_key(:id_token)
+        end
+      end
     end
 
-    it 'should not include raw_info in extras hash when skip_info is specified' do
-      @options = {:skip_info => true}
-      subject.extra.should_not have_key(:raw_info)
-    end
-  end
+    describe 'raw_info' do
+      context 'when skip_info is true' do
+        before { subject.options[:skip_info] = true }
 
-  describe 'raw friend info' do
-    it 'should not include raw friend info in extras hash by default' do
-      subject.stub(:raw_info) { {:id => '12345'} }
-      subject.extra.should_not have_key(:raw_friend_info)
+        it 'should not include raw_info' do
+          subject.extra.should_not have_key(:raw_info)
+        end
+      end
+
+      context 'when skip_info is false' do
+        before { subject.options[:skip_info] = false }
+
+        it 'should include raw_info' do
+          subject.extra[:raw_info].should eq('id' => '12345')
+        end
+      end
     end
 
-    it 'should not include raw friend info in extras hash when skip_info is specified to true' do
-      @options = {:skip_info => true, :skip_friends => false}
-      subject.extra.should_not have_key(:raw_friend_info)
-    end
+    describe 'raw_friend_info' do
+      context 'when skip_info is true' do
+        before { subject.options[:skip_info] = true }
 
-    it 'should include raw friend info in extras hash when skip_friend_info is specified to false' do
-      @options = {:skip_friends => false}
-      subject.stub(:raw_info) { {:id => '12345'} }
-      subject.stub(:raw_friend_info) { [{:foo => 'bar'}] }
-      subject.extra[:raw_friend_info].should eq([{:foo => 'bar'}])
+        it 'should not include raw_friend_info' do
+          subject.extra.should_not have_key(:raw_friend_info)
+        end
+      end
+
+      context 'when skip_info is false' do
+        before { subject.options[:skip_info] = false }
+
+        context 'when skip_friends is true' do
+          before { subject.options[:skip_friends] = true }
+
+          it 'should not include raw_friend_info' do
+            subject.extra.should_not have_key(:raw_friend_info)
+          end
+        end
+
+        context 'when skip_friends is false' do
+          before { subject.options[:skip_friends] = false }
+
+          it 'should not include raw_friend_info' do
+            subject.extra[:raw_friend_info].should eq([{'foo' => 'bar'}])
+          end
+        end
+      end
     end
   end
 
