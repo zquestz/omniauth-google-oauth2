@@ -7,10 +7,10 @@ module OmniAuth
       DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
 
       option :name, 'google_oauth2'
-      
+
       option :skip_friends, true
 
-      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :scope, :state, :redirect_uri]
+      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri]
 
       option :client_options, {
         :site          => 'https://accounts.google.com',

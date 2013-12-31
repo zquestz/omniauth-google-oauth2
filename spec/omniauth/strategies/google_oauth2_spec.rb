@@ -121,6 +121,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
     end
 
+    describe 'request_visible_actions' do
+      it "should default to nil" do
+        subject.authorize_params['request_visible_actions'].should eq(nil)
+      end
+
+      it 'should set the request_visible_actions parameter if present' do
+        @options = {:request_visible_actions => 'something'}
+        subject.authorize_params['request_visible_actions'].should eq('something')
+      end
+    end
+
     describe 'scope' do
       it 'should expand scope shortcuts' do
         @options = {:scope => 'userinfo.email'}
