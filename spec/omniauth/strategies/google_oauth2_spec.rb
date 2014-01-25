@@ -57,7 +57,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe "#authorize_options" do
-    [:access_type, :hd, :login_hint, :prompt, :scope, :state].each do |k|
+    [:access_type, :hd, :login_hint, :approval_prompt, :scope, :state].each do |k|
       it "should support #{k}" do
         @options = {k => 'http://someval'}
         subject.authorize_params[k.to_s].should eq('http://someval')
@@ -110,14 +110,14 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
     end
 
-    describe 'prompt' do
+    describe 'approval_prompt' do
       it "should default to nil" do
-        subject.authorize_params['prompt'].should eq(nil)
+        subject.authorize_params['approval_prompt'].should eq(nil)
       end
 
-      it 'should set the prompt parameter if present' do
-        @options = {:prompt => 'consent select_account'}
-        subject.authorize_params['prompt'].should eq('consent select_account')
+      it 'should set the approval_prompt parameter if present' do
+        @options = {:approval_prompt => 'force'}
+        subject.authorize_params['approval_prompt'].should eq('force')
       end
     end
 
@@ -192,7 +192,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
 
       describe "request overrides" do
-        [:access_type, :hd, :login_hint, :prompt, :scope, :state].each do |k|
+        [:access_type, :hd, :login_hint, :approval_prompt, :scope, :state].each do |k|
           context "authorize option #{k}" do
             let(:request) { double('Request', :params => {k.to_s => 'http://example.com'}, :cookies => {}, :env => {}) }
 
