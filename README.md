@@ -2,7 +2,7 @@
 
 Strategy to authenticate with Google via OAuth2 in OmniAuth.
 
-Get your API key at: https://code.google.com/apis/console/
+Get your API key at: https://code.google.com/apis/console/  Note the Client ID and the Client Secret.
 
 For more details, read the Google docs: https://developers.google.com/accounts/docs/OAuth2
 
@@ -22,7 +22,7 @@ Here's an example for adding the middleware to a Rails app in `config/initialize
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :google_oauth2, ENV["GOOGLE_KEY"], ENV["GOOGLE_SECRET"]
+  provider :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"]
 end
 ```
 
@@ -62,7 +62,7 @@ Here's an example of a possible configuration where the strategy name is changed
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :google_oauth2, ENV["GOOGLE_KEY"], ENV["GOOGLE_SECRET"],
+  provider :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"],
     {
       :name => "google",
       :scope => "userinfo.email, userinfo.profile, plus.me, http://gdata.youtube.com",
