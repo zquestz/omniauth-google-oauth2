@@ -132,6 +132,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
     end
 
+    describe 'include_granted_scopes' do
+      it 'should default to nil' do
+        subject.authorize_params['include_granted_scopes'].should eq(nil)
+      end
+
+      it 'should set the include_granted_scopes parameter if present' do
+        @options = {:include_granted_scopes => 'true'}
+        subject.authorize_params['include_granted_scopes'].should eq('true')
+      end
+    end
+
     describe 'scope' do
       it 'should expand scope shortcuts' do
         @options = {:scope => 'userinfo.email'}
