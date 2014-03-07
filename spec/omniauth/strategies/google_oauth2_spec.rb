@@ -144,38 +144,33 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     describe 'scope' do
-      it 'should expand scope shortcuts' do
-        @options = {:scope => 'userinfo.email'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email')
-      end
-
-      it 'should leave full scopes as is' do
-        @options = {:scope => 'https://www.googleapis.com/auth/userinfo.profile'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile')
+      it 'should leave scope as is' do
+        @options = {:scope => 'profile'}
+        subject.authorize_params['scope'].should eq('profile')
       end
 
       it 'should join scopes' do
-        @options = {:scope => 'userinfo.profile,userinfo.email'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+        @options = {:scope => 'profile,email'}
+        subject.authorize_params['scope'].should eq('profile email')
       end
 
       it 'should deal with whitespace when joining scopes' do
-        @options = {:scope => 'userinfo.profile, userinfo.email'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+        @options = {:scope => 'profile, email'}
+        subject.authorize_params['scope'].should eq('profile email')
       end
 
-      it 'should set default scope to userinfo.email,userinfo.profile' do
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
+      it 'should set default scope to profile,email' do
+        subject.authorize_params['scope'].should eq('profile email')
       end
 
       it 'should support space delimited scopes' do
-        @options = {:scope => 'userinfo.profile userinfo.email'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+        @options = {:scope => 'profile email'}
+        subject.authorize_params['scope'].should eq('profile email')
       end
 
       it "should support extremely badly formed scopes" do
-        @options = {:scope => 'userinfo.profile userinfo.email,foo,steve yeah http://example.com'}
-        subject.authorize_params['scope'].should eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/foo https://www.googleapis.com/auth/steve https://www.googleapis.com/auth/yeah http://example.com')
+        @options = {:scope => 'profile email,foo,steve yeah http://example.com'}
+        subject.authorize_params['scope'].should eq('profile email https://www.googleapis.com/auth/foo https://www.googleapis.com/auth/steve https://www.googleapis.com/auth/yeah http://example.com')
       end
     end
 
@@ -265,7 +260,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/oauth2/v1/userinfo') {|env| [200, {'content-type' => 'application/json'}, '{"id": "12345"}']}
+          stub.get('/plus/v1/people/me') {|env| [200, {'content-type' => 'application/json'}, '{"id": "12345"}']}
           stub.get('/plus/v1/people/12345/people/visible') {|env| [200, {'content-type' => 'application/json'}, '[{"foo":"bar"}]']}
         end
       end
@@ -424,7 +419,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
               :issued_to => '000000000000.apps.googleusercontent.com',
               :audience => '000000000000.apps.googleusercontent.com',
               :user_id => '000000000000000000000',
-              :scope => 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+              :scope => 'profile email',
               :expires_in => 3514,
               :email => 'me@example.com',
               :verified_email => true,
