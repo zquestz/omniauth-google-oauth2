@@ -159,8 +159,8 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         subject.authorize_params['scope'].should eq('profile email')
       end
 
-      it 'should set default scope to profile,email' do
-        subject.authorize_params['scope'].should eq('profile email')
+      it 'should set default scope to openid,profile,email' do
+        subject.authorize_params['scope'].should eq('openid profile email')
       end
 
       it 'should support space delimited scopes' do
@@ -260,7 +260,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/plus/v1/people/me') {|env| [200, {'content-type' => 'application/json'}, '{"id": "12345"}']}
+          stub.get('/plus/v1/people/me/openIdConnect') {|env| [200, {'content-type' => 'application/json'}, '{"id": "12345"}']}
           stub.get('/plus/v1/people/12345/people/visible') {|env| [200, {'content-type' => 'application/json'}, '[{"foo":"bar"}]']}
         end
       end

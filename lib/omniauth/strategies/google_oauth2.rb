@@ -4,7 +4,7 @@ module OmniAuth
   module Strategies
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
       BASE_SCOPE_URL = "https://www.googleapis.com/auth/"
-      DEFAULT_SCOPE = "profile,email"
+      DEFAULT_SCOPE = "openid,profile,email"
       LEAVE_SCOPES_AS_IS = %w(openid profile email)
 
       option :name, 'google_oauth2'
@@ -35,7 +35,7 @@ module OmniAuth
         end
       end
 
-      uid { raw_info['id'] || verified_email }
+      uid { raw_info['sub'] || verified_email }
 
       info do
         prune!({
@@ -59,7 +59,7 @@ module OmniAuth
       end
 
       def raw_info
-        @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me').parsed
+        @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
       end
 
       def raw_friend_info(id)
@@ -86,7 +86,7 @@ module OmniAuth
       end
 
       def verified_email
-        raw_info['verified_email'] ? raw_info['email'] : nil
+        raw_info['email_verified'] ? raw_info['email'] : nil
       end
 
       def image_url(options)
