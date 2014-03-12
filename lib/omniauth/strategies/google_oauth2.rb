@@ -66,7 +66,11 @@ module OmniAuth
       end
 
       def custom_build_access_token
-        if verify_token(request.params['id_token'], request.params['access_token'])
+        if request.xhr? && request.params['code']
+          verifier = request.params['code']
+          client.auth_code.get_token(verifier, { :redirect_uri => 'postmessage'}.merge(token_params.to_hash(:symbolize_keys => true)),
+                                     deep_symbolize(options.auth_token_params || {}))
+        elsif verify_token(request.params['id_token'], request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         else
           orig_build_access_token

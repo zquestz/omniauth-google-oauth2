@@ -397,7 +397,22 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe 'build_access_token' do
-    it 'should read access_token from hash' do
+    it 'should use a hybrid authorization request_uri if this is an AJAX request with a code parameter' do
+      request.stub(:xhr?).and_return(true)
+      request.stub(:params).and_return('code' => 'valid_code')
+
+      client = double(:client)
+      auth_code = double(:auth_code)
+      client.stub(:auth_code).and_return(auth_code)
+      subject.should_receive(:client).and_return(client)
+      auth_code.should_receive(:get_token).with('valid_code', { :redirect_uri => 'postmessage'}, {})
+
+      subject.should_not_receive(:orig_build_access_token)
+      subject.build_access_token
+    end
+
+    it 'should read access_token from hash if this is not an AJAX request with a code parameter' do
+      request.stub(:xhr?).and_return(false)
       request.stub(:params).and_return('id_token' => 'valid_id_token', 'access_token' => 'valid_access_token')
       subject.should_receive(:verify_token).with('valid_id_token', 'valid_access_token').and_return true
       subject.should_receive(:client).and_return(:client)
@@ -408,7 +423,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       token.client.should eq(:client)
     end
 
-    it 'should call super' do
+    it 'should call super if this is not an AJAX request' do
+      request.stub(:xhr?).and_return(false)
+      request.stub(:params).and_return('code' => 'valid_code')
       subject.should_receive(:orig_build_access_token)
       subject.build_access_token
     end
