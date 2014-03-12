@@ -187,7 +187,7 @@ window.gpAsyncInit = function() {
       scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
     }, function(response) {
       if (response && !response.error) {
-        // google authentication succeed, now post data to server and handle data securly
+        // google authentication succeed, now post data to server and handle data securely
         jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", dataType: 'json', data: response,
           success: function(json) {
             // response from server
