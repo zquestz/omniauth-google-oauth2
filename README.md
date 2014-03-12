@@ -154,6 +154,53 @@ end
 ```
 Detailed example at https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview#google-oauth2-example
 
+### One-time Code Flow (Hybrid Authentication)
+
+Google describes the One-time Code Flow [here](https://developers.google.com/+/web/signin/server-side-flow).  This hybrid authentication flow has significant functional and security advantages over a pure server-side or pure client-side flow.  The following steps occur in this flow:
+
+1. The client (web browser) authenticates the user directly via Google's JS API.  During this process assorted modals may be rendered by Google.
+2. On successful authentication, Google returns a one-time use code, which requires the Google client secret (which is only available server-side).
+3. Using a AJAX request, the code is POSTed to the Omniauth Google OAuth2 callback.
+4. The Omniauth Google OAuth2 gem will validate the code via a server-side request to Google.  If the code is valid, then Google will return an access token and, if this is the first time this user is authenticating against this application, a refresh token.  Both of these should be stored on the server.  The response to the AJAX request indicates the success or failure of this process.
+
+This flow is immune to replay attacks, and conveys no useful information to a man in the middle.
+
+The omniauth-google-oauth2 gem supports this mode of operation out of the box.  Implementors simply need to add the appropriate JavaScript to their web page, and they can take advantage of this flow.  An example JavaScript snippet follows.
+
+```javascript
+jQuery(function() {
+  return $.ajax({
+    url: 'https://apis.google.com/js/client:plus.js?onload=gpAsyncInit',
+    dataType: 'script',
+    cache: true
+  });
+});
+
+window.gpAsyncInit = function() {
+  $('.googleplus-login').click(function(e) {
+    e.preventDefault();
+    gapi.auth.authorize({
+      immediate: true,
+      response_type: 'code',
+      cookie_policy: 'single_host_origin',
+      client_id: '000000000000.apps.googleusercontent.com',
+      scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+    }, function(response) {
+      if (response && !response.error) {
+        // google authentication succeed, now post data to server and handle data securly
+        jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", dataType: 'json', data: response,
+          success: function(json) {
+            // response from server
+        });
+      } else {
+        // google authentication failed
+      }
+    });
+  });
+};
+```
+
+
 ## Build Status
 [![Build Status](https://travis-ci.org/zquestz/omniauth-google-oauth2.png)](https://travis-ci.org/zquestz/omniauth-google-oauth2)
 
