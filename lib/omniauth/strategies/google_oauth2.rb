@@ -42,7 +42,7 @@ module OmniAuth
           :email      => verified_email,
           :first_name => raw_info['given_name'],
           :last_name  => raw_info['family_name'],
-          :image      => image_url(options),
+          :image      => image_url,
           :urls => {
             'Google' => raw_info['link']
           }
@@ -92,10 +92,22 @@ module OmniAuth
         raw_info['verified_email'] ? raw_info['email'] : nil
       end
 
-      def image_url(options)
+      def image_url
         original_url = raw_info['picture']
-        return original_url if original_url.nil? || (!options[:image_size] && !options[:image_aspect_ratio])
+        params_index = original_url.index('/photo.jpg') if original_url
 
+        if params_index && image_size_opts_passed?
+          original_url.insert(params_index, image_params)
+        else
+          original_url
+        end
+      end
+
+      def image_size_opts_passed?
+        !!(options[:image_size] || options[:image_aspect_ratio])
+      end
+
+      def image_params
         image_params = []
         if options[:image_size].is_a?(Integer)
           image_params << "s#{options[:image_size]}"
@@ -105,8 +117,7 @@ module OmniAuth
         end
         image_params << 'c' if options[:image_aspect_ratio] == 'square'
 
-        params_index = original_url.index('/photo.jpg')
-        original_url.insert(params_index, ('/' + image_params.join('-')))
+        '/' + image_params.join('-')
       end
 
       def verify_token(id_token, access_token)
