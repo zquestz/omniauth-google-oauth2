@@ -186,7 +186,7 @@ window.gpAsyncInit = function() {
       response_type: 'code',
       cookie_policy: 'single_host_origin',
       client_id: '000000000000.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+      scope: 'email profile'
     }, function(response) {
       if (response && !response.error) {
         // google authentication succeed, now post data to server and handle data securely

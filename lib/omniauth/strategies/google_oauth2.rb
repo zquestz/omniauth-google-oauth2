@@ -4,7 +4,8 @@ module OmniAuth
   module Strategies
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
       BASE_SCOPE_URL = "https://www.googleapis.com/auth/"
-      DEFAULT_SCOPE = "userinfo.email,userinfo.profile"
+      BASE_SCOPES = %w[profile email openid]
+      DEFAULT_SCOPE = "email,profile"
 
       option :name, 'google_oauth2'
 
@@ -26,7 +27,7 @@ module OmniAuth
 
           raw_scope = params[:scope] || DEFAULT_SCOPE
           scope_list = raw_scope.split(" ").map {|item| item.split(",")}.flatten
-          scope_list.map! { |s| s =~ /^https?:\/\// ? s : "#{BASE_SCOPE_URL}#{s}" }
+          scope_list.map! { |s| s =~ /^https?:\/\// || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
           params[:scope] = scope_list.join(" ")
           params[:access_type] = 'offline' if params[:access_type].nil?
 
