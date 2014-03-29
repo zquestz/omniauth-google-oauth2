@@ -145,37 +145,37 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     describe 'scope' do
       it 'should expand scope shortcuts' do
-        @options = {:scope => 'userinfo.email'}
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/userinfo.email')
+        @options = {:scope => 'plus.me'}
+        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/plus.me')
       end
 
-      it 'should leave full scopes as is' do
-        @options = {:scope => 'https://www.googleapis.com/auth/userinfo.profile'}
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/userinfo.profile')
+      it 'should leave base scopes as is' do
+        @options = {:scope => 'profile'}
+        expect(subject.authorize_params['scope']).to eq('profile')
       end
 
       it 'should join scopes' do
-        @options = {:scope => 'userinfo.profile,userinfo.email'}
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+        @options = {:scope => 'profile,email'}
+        expect(subject.authorize_params['scope']).to eq('profile email')
       end
 
       it 'should deal with whitespace when joining scopes' do
-        @options = {:scope => 'userinfo.profile, userinfo.email'}
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+        @options = {:scope => 'profile, email'}
+        expect(subject.authorize_params['scope']).to eq('profile email')
       end
 
-      it 'should set default scope to userinfo.email,userinfo.profile' do
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile')
+      it 'should set default scope to email,profile' do
+        expect(subject.authorize_params['scope']).to eq('email profile')
       end
 
       it 'should support space delimited scopes' do
-        @options = {:scope => 'userinfo.profile userinfo.email'}
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')
+        @options = {:scope => 'profile email'}
+        expect(subject.authorize_params['scope']).to eq('profile email')
       end
 
       it "should support extremely badly formed scopes" do
-        @options = {:scope => 'userinfo.profile userinfo.email,foo,steve yeah http://example.com'}
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/foo https://www.googleapis.com/auth/steve https://www.googleapis.com/auth/yeah http://example.com')
+        @options = {:scope => 'profile email,foo,steve yeah http://example.com'}
+        expect(subject.authorize_params['scope']).to eq('profile email https://www.googleapis.com/auth/foo https://www.googleapis.com/auth/steve https://www.googleapis.com/auth/yeah http://example.com')
       end
     end
 
@@ -447,7 +447,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
               :issued_to => '000000000000.apps.googleusercontent.com',
               :audience => '000000000000.apps.googleusercontent.com',
               :user_id => '000000000000000000000',
-              :scope => 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+              :scope => 'profile email',
               :expires_in => 3514,
               :email => 'me@example.com',
               :verified_email => true,
