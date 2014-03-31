@@ -25,9 +25,9 @@ module OmniAuth
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
 
-          raw_scope = params[:scope] || DEFAULT_SCOPE
+          raw_scope = params[:scope] || self.class::DEFAULT_SCOPE
           scope_list = raw_scope.split(" ").map {|item| item.split(",")}.flatten
-          scope_list.map! { |s| s =~ /^https?:\/\// || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
+          scope_list.map! { |s| s =~ /^https?:\/\// || self.class::BASE_SCOPES.include?(s) ? s : "#{self.class::BASE_SCOPE_URL}#{s}" }
           params[:scope] = scope_list.join(" ")
           params[:access_type] = 'offline' if params[:access_type].nil?
 

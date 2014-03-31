@@ -202,6 +202,18 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         expect(subject.authorize_params['request_visible_actions']).to eq('something')
       end
 
+      it 'should get the default scope from the current class to allow class extensions' do
+        class OmniAuth::Strategies::Foo < OmniAuth::Strategies::GoogleOauth2
+          DEFAULT_SCOPE = 'http://bar'
+        end
+        foo = OmniAuth::Strategies::Foo.new(app, 'appid', 'secret', {}).tap do |strategy|
+          allow(strategy).to receive(:request) {
+            request
+          }
+        end
+        expect(foo.authorize_params['scope']).to eq('http://bar')
+      end
+
       describe "request overrides" do
         [:access_type, :hd, :login_hint, :prompt, :scope, :state].each do |k|
           context "authorize option #{k}" do
