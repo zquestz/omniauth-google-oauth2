@@ -265,7 +265,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/oauth2/v1/userinfo') {|env| [200, {'content-type' => 'application/json'}, '{"id": "12345"}']}
+          stub.get('/plus/v1/people/me/openIdConnect') {|env| [200, {'content-type' => 'application/json'}, '{"sub": "12345"}']}
           stub.get('/plus/v1/people/12345/people/visible') {|env| [200, {'content-type' => 'application/json'}, '[{"foo":"bar"}]']}
         end
       end
@@ -303,7 +303,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         before { subject.options[:skip_info] = false }
 
         it 'should include raw_info' do
-          expect(subject.extra[:raw_info]).to eq('id' => '12345')
+          expect(subject.extra[:raw_info]).to eq('sub' => '12345')
         end
       end
     end
@@ -341,7 +341,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
   describe 'populate auth hash urls' do
     it 'should populate url map in auth hash if link present in raw_info' do
-      allow(subject).to receive(:raw_info) { {'name' => 'Foo', 'link' => 'https://plus.google.com/123456'} }
+      allow(subject).to receive(:raw_info) { {'name' => 'Foo', 'profile' => 'https://plus.google.com/123456'} }
       expect(subject.info[:urls]['Google']).to eq('https://plus.google.com/123456')
     end
 
