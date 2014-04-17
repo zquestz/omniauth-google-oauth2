@@ -100,13 +100,13 @@ Here's an example of an authentication hash available in the callback by accessi
     },
     :extra => {
         :raw_info => {
-            :id => "123456789",
+            :sub => "123456789",
             :email => "user@domain.example.com",
-            :verified_email => true,
+            :email_verified => true,
             :name => "John Doe",
             :given_name => "John",
             :family_name => "Doe",
-            :link => "https://plus.google.com/123456789",
+            :profile => "https://plus.google.com/123456789",
             :picture => "https://lh3.googleusercontent.com/url/photo.jpg",
             :gender => "male",
             :birthday => "0000-06-25",
