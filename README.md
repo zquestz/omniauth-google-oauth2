@@ -37,7 +37,7 @@ NOTE: While developing your application, if you change the scope in the initiali
 You can configure several options, which you pass in to the `provider` method via a hash:
 
 * `scope`: A comma-separated list of permissions you want to request from the user. See the [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) for a full list of available permissions. Caveats:
-  * The `userinfo.email` and `userinfo.profile` scopes are used by default. By defining your own `scope`, you override these defaults. If you need these scopes, don't forget to add them yourself!
+  * The `email` and `profile` scopes are used by default. By defining your own `scope`, you override these defaults. If you need these scopes, don't forget to add them yourself!
   * Scopes starting with `https://www.googleapis.com/auth/` do not need that prefix specified. So while you can use the smaller scope `books` since that permission starts with the mentioned prefix, you should use the full scope URL `https://docs.google.com/feeds/` to access a user's docs, for example.
 * `prompt`: A space-delimited list of string values that determines whether the user is re-prompted for authentication and/or consent. Possible values are:
   * `none`: No authentication or consent pages will be displayed; it will return an error if the user is not already authenticated and has not pre-configured consent for the requested scopes. This can be used as a method to check for existing authentication and/or consent.
@@ -69,7 +69,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   provider :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"],
     {
       :name => "google",
-      :scope => "userinfo.email, userinfo.profile, plus.me, http://gdata.youtube.com",
+      :scope => "email, profile, plus.me, http://gdata.youtube.com",
       :prompt => "select_account",
       :image_aspect_ratio => "square",
       :image_size => 50
