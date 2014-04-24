@@ -400,6 +400,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
       expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
     end
+    
+    it 'should return correct image if google image url has double https' do
+      allow(subject).to receive(:raw_info) { {'picture' => 'http:https://lh3.googleusercontent.com/url/photo.jpg'} }
+      expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
+    end
   end
 
   describe 'build_access_token' do
