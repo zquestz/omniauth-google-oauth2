@@ -94,7 +94,8 @@ module OmniAuth
       end
 
       def image_url
-        original_url = raw_info['picture'].gsub("https:https://", "https://")
+        original_url = raw_info['picture']
+        original_url = original_url.gsub("https:https://", "https://") if original_url
         params_index = original_url.index('/photo.jpg') if original_url
 
         if params_index && image_size_opts_passed?
