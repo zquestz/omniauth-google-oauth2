@@ -16,6 +16,14 @@ gem "omniauth-google-oauth2"
 
 Then `bundle install`.
 
+## Google API Setup
+
+* Go to 'https://console.developers.google.com'
+* Select your project.
+* Click 'APIs & auth'
+* Make sure "Contacts API" and "Google+ API" are on.
+* Wait 10 minutes for changes to take effect.
+
 ## Usage
 
 Here's an example for adding the middleware to a Rails app in `config/initializers/omniauth.rb`:
@@ -28,9 +36,9 @@ end
 
 You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
 
-For more examples please check out `examples/omni_auth.rb`
+For more examples please check out `examples/omni_auth.rb`e
 
-NOTE: While developing your application, if you change the scope in the initializer you will need to restart your app server.
+NOTE: While developing your application, if you change the scope in the initializer you will need to restart your app server. Remember that 'email' and 'profile' scopes are required!
 
 ## Configuration
 
