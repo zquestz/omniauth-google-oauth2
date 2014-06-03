@@ -272,7 +272,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
     let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
 
-    before { subject.stub(:access_token => access_token) }
+    before { allow(subject).to receive(:access_token).and_return(access_token) }
 
     describe 'id_token' do
       context 'when the id_token is passed into the access token' do
