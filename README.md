@@ -38,7 +38,7 @@ end
 
 You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
 
-For more examples please check out `examples/omni_auth.rb`e
+For more examples please check out `examples/omni_auth.rb`
 
 NOTE: While developing your application, if you change the scope in the initializer you will need to restart your app server. Remember that 'email' and 'profile' scopes are required!
 
