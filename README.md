@@ -205,6 +205,7 @@ window.gpAsyncInit = function() {
         jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", dataType: 'json', data: response,
           success: function(json) {
             // response from server
+          }
         });
       } else {
         // google authentication failed
