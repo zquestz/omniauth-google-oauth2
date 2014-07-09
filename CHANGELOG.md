@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.2.5 - 2014-07-09
+
+### Added
+- Support for versions of omniauth past 1.0.x.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
 ## 0.2.4 - 2014-04-25
 
 ### Added
