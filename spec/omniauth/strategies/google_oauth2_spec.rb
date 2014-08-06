@@ -57,7 +57,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe "#authorize_options" do
-    [:access_type, :hd, :login_hint, :prompt, :scope, :state].each do |k|
+    [:access_type, :hd, :login_hint, :approval_prompt, :scope, :state].each do |k|
       it "should support #{k}" do
         @options = {k => 'http://someval'}
         expect(subject.authorize_params[k.to_s]).to eq('http://someval')
@@ -110,14 +110,14 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
     end
 
-    describe 'prompt' do
+    describe 'approval_prompt' do
       it "should default to nil" do
-        expect(subject.authorize_params['prompt']).to eq(nil)
+        expect(subject.authorize_params['approval_prompt']).to eq(nil)
       end
 
-      it 'should set the prompt parameter if present' do
-        @options = {:prompt => 'consent select_account'}
-        expect(subject.authorize_params['prompt']).to eq('consent select_account')
+      it 'should set the approval_prompt parameter if present' do
+        @options = {:approval_prompt => 'force'}
+        expect(subject.authorize_params['approval_prompt']).to eq('force')
       end
     end
 
@@ -203,7 +203,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
 
       describe "request overrides" do
-        [:access_type, :hd, :login_hint, :prompt, :scope, :state].each do |k|
+        [:access_type, :hd, :login_hint, :approval_prompt, :scope, :state].each do |k|
           context "authorize option #{k}" do
             let(:request) { double('Request', :params => {k.to_s => 'http://example.com'}, :cookies => {}, :env => {}) }
 
@@ -400,7 +400,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
       expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
     end
-    
+
     it 'should return correct image if google image url has double https' do
       allow(subject).to receive(:raw_info) { {'picture' => 'https:https://lh3.googleusercontent.com/url/photo.jpg'} }
       expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
