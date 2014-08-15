@@ -130,7 +130,25 @@ Here's an example of an authentication hash available in the callback by accessi
 
 ### Devise
 
-For devise, you should also make sure you have an OmniAuth callback controller setup
+First define your application id and secret in "config/initializers/devise.rb"
+
+```ruby
+config.omniauth :google_oauth2, "APP_ID", "APP_SECRET", { }
+```
+
+Then add the following to 'config/routes.rb' so the callback routes are defined.
+
+```ruby
+devise_for :users, :controllers => { :omniauth_callbacks => "users/omniauth_callbacks" }
+```
+
+Make sure your model is omniauthable. Generally this is "/app/models/user.rb"
+
+```ruby
+devise :omniauthable, :omniauth_providers => [:google_oauth2]
+```
+
+Then make sure your callbacks controller is setup.
 
 ```ruby
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
@@ -166,7 +184,14 @@ def self.find_for_google_oauth2(access_token, signed_in_resource=nil)
     user
 end
 ```
-Detailed example at https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview#google-oauth2-example
+
+For your views you can login using:
+
+```ruby
+<%= link_to "Sign in with Google", user_omniauth_authorize_path(:google_oauth2) %>
+```
+
+An overview is available at https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
 
 ### One-time Code Flow (Hybrid Authentication)
 
