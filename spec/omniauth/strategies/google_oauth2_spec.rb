@@ -261,12 +261,13 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe '#extra' do
+    let(:gianni) { File.read(File.join(__dir__, '..', '..', 'fixtures', 'gianni.json')) }
     let(:client) do
       OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/plus/v1/people/me/openIdConnect') {|env| [200, {'content-type' => 'application/json'}, '{"sub": "12345"}']}
-          stub.get('/plus/v1/people/12345/people/visible') {|env| [200, {'content-type' => 'application/json'}, '[{"foo":"bar"}]']}
+          stub.get('/plus/v1/people/me') {|env| [200, {'content-type' => 'application/json'}, gianni]}
+          stub.get("/plus/v1/people/#{JSON.parse(gianni)['id']}/people/visible") {|env| [200, {'content-type' => 'application/json'}, '[{"foo":"bar"}]']}
         end
       end
     end
@@ -303,7 +304,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         before { subject.options[:skip_info] = false }
 
         it 'should include raw_info' do
-          expect(subject.extra[:raw_info]).to eq('sub' => '12345')
+          # Test one of the translated keys
+          json = JSON.parse(gianni)
+          expect(subject.extra[:raw_info]['picture']).to eq(json['image']['url'])
         end
       end
     end
@@ -400,7 +403,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
       expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
     end
-    
+
     it 'should return correct image if google image url has double https' do
       allow(subject).to receive(:raw_info) { {'picture' => 'https:https://lh3.googleusercontent.com/url/photo.jpg'} }
       expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')

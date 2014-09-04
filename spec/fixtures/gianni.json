@@ -1,0 +1,82 @@
+{
+ "kind": "plus#person",
+ "etag": "\"Vea_b94Y77GDGgRK7gFNPnolKQw/y5fQWGxDu3UcLIOMSrvxKqnWCIQ\"",
+ "occupation": "Master Gunner",
+ "gender": "male",
+ "emails": [
+  {
+   "value": "gianni@runlevel6.org",
+   "type": "account"
+  }
+ ],
+ "urls": [
+  {
+   "value": "http://gf3.ca",
+   "type": "otherProfile",
+   "label": "gf3.ca"
+  },
+  {
+   "value": "http://twitter.com/gf3",
+   "type": "otherProfile",
+   "label": "@gf3"
+  },
+  {
+   "value": "http://www.last.fm/user/giannic/",
+   "type": "otherProfile",
+   "label": "giannic"
+  }
+ ],
+ "objectType": "person",
+ "id": "101819129741241694334",
+ "displayName": "Gianni Chiappetta",
+ "name": {
+  "familyName": "Chiappetta",
+  "givenName": "Gianni"
+ },
+ "tagline": "I Went Through A Lot Of Puberty",
+ "url": "https://plus.google.com/101819129741241694334",
+ "image": {
+  "url": "https://lh4.googleusercontent.com/-bo6A4x0Q7yU/AAAAAAAAAAI/AAAAAAAADsI/pDkJKMf62OQ/photo.jpg?sz=50",
+  "isDefault": false
+ },
+ "organizations": [
+  {
+   "name": "Uniiverse",
+   "title": "Master Gunner",
+   "type": "work",
+   "primary": true
+  },
+  {
+   "name": "MetaLab",
+   "title": "Chief Rigger",
+   "type": "work",
+   "primary": false
+  }
+ ],
+ "placesLived": [
+  {
+   "value": "Toronto, Canada",
+   "primary": true
+  }
+ ],
+ "isPlusUser": true,
+ "language": "en",
+ "ageRange": {
+  "min": 21
+ },
+ "circledByCount": 1354,
+ "verified": false,
+ "cover": {
+  "layout": "banner",
+  "coverPhoto": {
+   "url": "https://lh6.googleusercontent.com/-HAnbn_2mtM0/U6w0kQNsRtI/AAAAAAAADms/VGHkWzrzDJ8/s630-fcrop64=1,00001944fffff407/1399011_369541869849756_55684136_o.jpg",
+   "height": 624,
+   "width": 940
+  },
+  "coverInfo": {
+   "topImageOffset": -282,
+   "leftImageOffset": 0
+  }
+ },
+ "domain": "runlevel6.org"
+}
