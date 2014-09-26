@@ -24,7 +24,7 @@ Then `bundle install`.
 * Select your project.
 * Click 'APIs & auth'
 * Make sure "Contacts API" and "Google+ API" are on.
-* Go to Consent Screen, and provide a 'PRODUCT NAME'
+* Go to Consent Screen, and provide an 'EMAIL ADDRESS' and a 'PRODUCT NAME'
 * Wait 10 minutes for changes to take effect.
 
 ## Usage
