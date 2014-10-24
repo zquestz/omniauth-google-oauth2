@@ -92,7 +92,7 @@ module OmniAuth
         end
       end
       alias_method :orig_build_access_token, :build_access_token
-      alias :build_access_token :custom_build_access_token
+      alias_method :build_access_token, :custom_build_access_token
 
       private
 
