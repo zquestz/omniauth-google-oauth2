@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.2.6 - 2014-10-26
+
+### Added
+- Nothing.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Hybrid authorization issues due to bad method alias.
+
 ## 0.2.5 - 2014-07-09
 
 ### Added
