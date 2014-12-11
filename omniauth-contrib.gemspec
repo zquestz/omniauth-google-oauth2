@@ -2,7 +2,9 @@
 require File.expand_path(File.join('..', 'lib', 'omniauth', 'google_oauth2', 'version'), __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.add_dependency 'omniauth', '> 1.0'
+  # Nothing lower than omniauth 1.1.1
+  # http://www.rubysec.com/advisories/CVE-2012-6134/
+  gem.add_dependency 'omniauth', '>= 1.1.1'
 
   gem.authors       = ["Josh Ellithorpe", "Yury Korolev"]
   gem.email         = ["quest@mac.com"]
@@ -17,7 +19,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = OmniAuth::GoogleOauth2::VERSION
 
-  gem.add_runtime_dependency 'omniauth-oauth2', '~> 1.1'
+  gem.add_runtime_dependency 'omniauth-oauth2', '>= 1.1'
 
   gem.add_development_dependency 'rspec', '>= 2.14.0'
   gem.add_development_dependency 'rake'
