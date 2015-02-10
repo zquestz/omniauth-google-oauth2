@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.name          = "omniauth-google-oauth2"
   gem.require_paths = ["lib"]
   gem.version       = OmniAuth::GoogleOauth2::VERSION
+  gem.license       = 'MIT'
 
   # Nothing lower than omniauth-oauth2 1.1.1
   # http://www.rubysec.com/advisories/CVE-2012-6134/
