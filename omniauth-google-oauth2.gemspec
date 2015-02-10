@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["quest@mac.com"]
   gem.description   = %q{A Google OAuth2 strategy for OmniAuth 1.x}
   gem.summary       = %q{A Google OAuth2 strategy for OmniAuth 1.x}
-  gem.homepage      = ""
+  gem.homepage      = "https://github.com/zquestz/omniauth-google-oauth2"
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   gem.files         = `git ls-files`.split("\n")
