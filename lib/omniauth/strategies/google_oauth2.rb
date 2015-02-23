@@ -35,7 +35,7 @@ module OmniAuth
         end
       end
 
-      uid { raw_info['sub'] || verified_email }
+      uid { raw_info['id'] || verified_email }
 
       info do
         prune!({
@@ -54,12 +54,26 @@ module OmniAuth
         hash = {}
         hash[:id_token] = access_token['id_token']
         hash[:raw_info] = raw_info unless skip_info?
-        hash[:raw_friend_info] = raw_friend_info(raw_info['sub']) unless skip_info? || options[:skip_friends]
+        hash[:raw_friend_info] = raw_friend_info(raw_info['id']) unless skip_info? || options[:skip_friends]
         prune! hash
       end
 
+      # Mimic people#openIdConnect response
       def raw_info
-        @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
+        @raw_info ||= Hash.new.tap do |data|
+          raw = access_token.get('https://www.googleapis.com/plus/v1/people/me').parsed
+
+          data['email']          = raw['emails'].first && raw['emails'].first['value']
+          data['email_verified'] = !!data['email']
+          data['family_name']    = raw['name'] && raw['name']['familyName']
+          data['gender']         = raw['gender']
+          data['given_name']     = raw['name'] && raw['name']['givenName']
+          data['id']             = raw['id']
+          data['kind']           = raw['kind']
+          data['name']           = raw['displayName']
+          data['profile']        = raw['url']
+          data['picture']        = raw['image'] && raw['image']['url']
+        end
       end
 
       def raw_friend_info(id)
