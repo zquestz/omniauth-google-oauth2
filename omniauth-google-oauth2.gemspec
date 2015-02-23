@@ -14,8 +14,8 @@ Gem::Specification.new do |gem|
   gem.files         = `git ls-files`.split("\n")
   gem.require_paths = ["lib"]
 
-  gem.add_runtime_dependency 'omniauth', '>= 1.1.1'
-  gem.add_runtime_dependency 'omniauth-oauth2', '>= 1.1.1'
+  gem.add_runtime_dependency 'omniauth', '~> 1.2'
+  gem.add_runtime_dependency 'omniauth-oauth2', '~> 1.2'
 
   gem.add_development_dependency 'rspec', '>= 2.14.0'
   gem.add_development_dependency 'rake'
