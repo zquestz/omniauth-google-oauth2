@@ -1,3 +1,5 @@
+require 'multi_json'
+require 'jwt'
 require 'omniauth/strategies/oauth2'
 
 module OmniAuth
@@ -11,7 +13,7 @@ module OmniAuth
 
       option :skip_friends, true
 
-      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri, :include_granted_scopes]
+      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri, :include_granted_scopes, :openid_realm]
 
       option :client_options, {
         :site          => 'https://accounts.google.com',
@@ -30,6 +32,7 @@ module OmniAuth
           scope_list.map! { |s| s =~ /^https?:\/\// || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
           params[:scope] = scope_list.join(" ")
           params[:access_type] = 'offline' if params[:access_type].nil?
+          params['openid.realm'] = params.delete(:openid_realm) unless params[:openid_realm].nil?
 
           session['omniauth.state'] = params[:state] if params['state']
         end
@@ -53,6 +56,7 @@ module OmniAuth
       extra do
         hash = {}
         hash[:id_token] = access_token['id_token']
+        hash[:id_info] = JWT.decode( access_token['id_token'], nil, false).first unless access_token['id_token'].nil?
         hash[:raw_info] = raw_info unless skip_info?
         hash[:raw_friend_info] = raw_friend_info(raw_info['sub']) unless skip_info? || options[:skip_friends]
         prune! hash
