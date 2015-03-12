@@ -276,16 +276,25 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     describe 'id_token' do
       context 'when the id_token is passed into the access token' do
-       let(:access_token) { OAuth2::AccessToken.from_hash(client, {'id_token' => 'xyz'}) }
+        id_token = JWT.encode({'abc' => 'xyz'}, 'secret')
+        let(:access_token) { OAuth2::AccessToken.from_hash(client, {'id_token' => id_token}) }
 
         it 'should include id_token when set on the access_token' do
-          expect(subject.extra).to include(:id_token => 'xyz')
+          expect(subject.extra).to include(:id_token => id_token)
+        end
+
+        it 'should include id_info when id_token set on the access_token' do
+          expect(subject.extra).to include(:id_info => {'abc' => 'xyz'})
         end
       end
 
       context 'when the id_token is missing' do
         it 'should not include id_token' do
           expect(subject.extra).not_to have_key(:id_token)
+        end
+
+        it 'should not include id_info' do
+          expect(subject.extra).not_to have_key(:id_info)
         end
       end
     end

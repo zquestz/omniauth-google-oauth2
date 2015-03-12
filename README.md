@@ -73,6 +73,8 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `include_granted_scopes`: If this is provided with the value true, and the authorization request is granted, the authorization will include any previous authorizations granted to this user/application combination for other scopes. See Google's [Incremental Autorization](https://developers.google.com/accounts/docs/OAuth2WebServer#incrementalAuth) for additional details.
 
+* `openid_realm`: Set the OpenID realm value, to allow upgrading from OpenID based authentication to OAuth 2 based authentication. When this is set correctly an `openid_id` value will be set in `[:extra][:id_info]` in the authentication hash with the value of the user's OpenID ID URL.
+
 Here's an example of a possible configuration where the strategy name is changed, the user is asked for extra permissions, the user is always prompted to select his account when logging in and the user's profile picture is returned as a thumbnail:
 
 ```ruby
@@ -123,6 +125,18 @@ Here's an example of an authentication hash available in the callback by accessi
             :birthday => "0000-06-25",
             :locale => "en",
             :hd => "company_name.com"
+        },
+        :id_info => {
+            "iss" => "accounts.google.com",
+            "at_hash" => "HK6E_P6Dh8Y93mRNtsDB1Q",
+            "email_verified" => "true",
+            "sub" => "10769150350006150715113082367",
+            "azp" => "APP_ID",
+            "email" => "jsmith@example.com",
+            "aud" => "APP_ID",
+            "iat" => 1353601026,
+            "exp" => 1353604926
+            "openid_id" => "https://www.google.com/accounts/o8/id?id=ABCdfdswawerSDFDsfdsfdfjdsf"
         }
     }
 }
