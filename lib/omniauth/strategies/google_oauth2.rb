@@ -56,7 +56,16 @@ module OmniAuth
       extra do
         hash = {}
         hash[:id_token] = access_token['id_token']
-        hash[:id_info] = JWT.decode( access_token['id_token'], nil, false).first unless access_token['id_token'].nil?
+        if !access_token['id_token'].nil?
+          hash[:id_info] = JWT.decode(
+            access_token['id_token'], nil, false, {
+              :verify_iss => true,
+              'iss' => 'accounts.google.com',
+              :verify_aud => true,
+              'aud' => options.client_id,
+              :verify_sub => false
+            }).first
+        end
         hash[:raw_info] = raw_info unless skip_info?
         hash[:raw_friend_info] = raw_friend_info(raw_info['sub']) unless skip_info? || options[:skip_friends]
         prune! hash

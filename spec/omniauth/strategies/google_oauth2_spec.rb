@@ -276,7 +276,16 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     describe 'id_token' do
       context 'when the id_token is passed into the access token' do
-        id_token = JWT.encode({'abc' => 'xyz'}, 'secret')
+        token_info =
+          {
+            'abc' => 'xyz',
+            'exp' => Time.now.to_i + 3600,
+            'nbf' => Time.now.to_i - 60,
+            'iat' => Time.now.to_i,
+            'aud' => 'appid',
+            'iss' => 'accounts.google.com',
+          }
+        id_token = JWT.encode(token_info, 'secret')
         let(:access_token) { OAuth2::AccessToken.from_hash(client, {'id_token' => id_token}) }
 
         it 'should include id_token when set on the access_token' do
@@ -284,7 +293,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         end
 
         it 'should include id_info when id_token set on the access_token' do
-          expect(subject.extra).to include(:id_info => {'abc' => 'xyz'})
+          expect(subject.extra).to include(:id_info => token_info)
         end
       end
 
