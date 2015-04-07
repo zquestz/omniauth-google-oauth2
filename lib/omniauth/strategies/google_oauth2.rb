@@ -63,7 +63,11 @@ module OmniAuth
               'iss' => 'accounts.google.com',
               :verify_aud => true,
               'aud' => options.client_id,
-              :verify_sub => false
+              :verify_sub => false,
+              :verify_expiration => true,
+              :verify_not_before => true,
+              :verify_iat => true,
+              :verify_jti => false
             }).first
         end
         hash[:raw_info] = raw_info unless skip_info?
