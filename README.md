@@ -137,7 +137,7 @@ Here's an example of an authentication hash available in the callback by accessi
             "email" => "jsmith@example.com",
             "aud" => "APP_ID",
             "iat" => 1353601026,
-            "exp" => 1353604926
+            "exp" => 1353604926,
             "openid_id" => "https://www.google.com/accounts/o8/id?id=ABCdfdswawerSDFDsfdsfdfjdsf"
         }
     }
