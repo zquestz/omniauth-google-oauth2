@@ -383,6 +383,12 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
       end
 
+      it 'should handle a picture with too many slashes correctly' do
+        @options = {:image_size => 50}
+        allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url//photo.jpg'} }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
+      end
+
       it 'should return the image with width and height specified in the `image_size` option' do
         @options = {:image_size => {:width => 50, :height => 40}}
         allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }

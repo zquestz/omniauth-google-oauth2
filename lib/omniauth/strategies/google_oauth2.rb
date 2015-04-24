@@ -116,15 +116,17 @@ module OmniAuth
       end
 
       def image_url
-        original_url = raw_info['picture']
-        original_url = original_url.gsub("https:https://", "https://") if original_url
-        params_index = original_url.index('/photo.jpg') if original_url
+        return nil unless raw_info['picture']
 
-        if params_index && image_size_opts_passed?
-          original_url.insert(params_index, image_params)
-        else
-          original_url
+        u = URI.parse(raw_info['picture'].gsub('https:https', 'https'))
+        path_index = u.path.to_s.index('/photo.jpg')
+
+        if path_index && image_size_opts_passed?
+          u.path.insert(path_index, image_params)
+          u.path = u.path.gsub('//', '/')
         end
+
+        u.to_s
       end
 
       def image_size_opts_passed?
