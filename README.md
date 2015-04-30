@@ -149,7 +149,7 @@ Here's an example of an authentication hash available in the callback by accessi
 First define your application id and secret in "config/initializers/devise.rb"
 
 ```ruby
-config.omniauth :google_oauth2, "APP_ID", "APP_SECRET", { }
+config.omniauth :google_oauth2, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", { }
 ```
 
 Then add the following to 'config/routes.rb' so the callback routes are defined.
