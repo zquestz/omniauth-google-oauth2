@@ -256,6 +256,24 @@ window.gpAsyncInit = function() {
 };
 ```
 
+### Omniauth state
+
+If you'd like to use omniauth state param, you can implement it by yourself using rails csrf token. For example:
+
+```ruby
+class ApplicationController < ActionController::Base
+  before_action :initialize_omniauth_state
+
+  protected
+
+  def initialize_omniauth_state
+    session['omniauth.state'] = response.headers['X-CSRF-Token'] = form_authenticity_token
+  end
+...
+```
+
+and add ```skip_before_filter :verify_authenticity_token``` in your omniauth callback controller because it is already verified by omniauth state. And then you no need to add ```:provider_ignores_state => true``` in your omniauth initializer.
+
 
 ## Build Status
 [![Build Status](https://travis-ci.org/zquestz/omniauth-google-oauth2.png)](https://travis-ci.org/zquestz/omniauth-google-oauth2)
