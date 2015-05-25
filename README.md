@@ -170,7 +170,7 @@ Then make sure your callbacks controller is setup.
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def google_oauth2
       # You need to implement the method below in your model (e.g. app/models/user.rb)
-      @user = User.find_for_google_oauth2(request.env["omniauth.auth"], current_user)
+      @user = User.from_omniauth(request.env["omniauth.auth"])
 
       if @user.persisted?
         flash[:notice] = I18n.t "devise.omniauth_callbacks.success", :kind => "Google"
@@ -186,7 +186,7 @@ end
 and bind to or create the user
 
 ```ruby
-def self.find_for_google_oauth2(access_token, signed_in_resource=nil)
+def self.from_omniauth(access_token)
     data = access_token.info
     user = User.where(:email => data["email"]).first
 
@@ -281,7 +281,7 @@ and add ```skip_before_filter :verify_authenticity_token``` in your omniauth cal
 
 ## License
 
-Copyright (c) 2013 by Josh Ellithorpe
+Copyright (c) 2015 by Josh Ellithorpe
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
