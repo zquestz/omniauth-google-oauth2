@@ -38,4 +38,10 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   #   :skip_friends => false,
   #   :scope => "email,profile,plus.login"
   # }
+
+  # If you need to acquire whether user picture is a default one or uploaded by user.
+  #
+  # provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {
+  #   :skip_image_info => false
+  # }
 end

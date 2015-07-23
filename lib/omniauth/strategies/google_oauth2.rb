@@ -13,6 +13,8 @@ module OmniAuth
 
       option :skip_friends, true
 
+      option :skip_image_info, true
+
       option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri, :include_granted_scopes, :openid_realm]
 
       option :client_options, {
@@ -72,6 +74,7 @@ module OmniAuth
         end
         hash[:raw_info] = raw_info unless skip_info?
         hash[:raw_friend_info] = raw_friend_info(raw_info['sub']) unless skip_info? || options[:skip_friends]
+        hash[:raw_image_info] = raw_image_info(raw_info['sub']) unless skip_info? || options[:skip_image_info]
         prune! hash
       end
 
@@ -81,6 +84,10 @@ module OmniAuth
 
       def raw_friend_info(id)
         @raw_friend_info ||= access_token.get("https://www.googleapis.com/plus/v1/people/#{id}/people/visible").parsed
+      end
+
+      def raw_image_info(id)
+        @raw_image_info ||= access_token.get("https://www.googleapis.com/plus/v1/people/#{id}?fields=image").parsed
       end
 
       def custom_build_access_token
