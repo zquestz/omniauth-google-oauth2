@@ -93,13 +93,11 @@ module OmniAuth
       def custom_build_access_token
         if request.xhr? && request.params['code']
           verifier = request.params['code']
-          client.auth_code.get_token(verifier, { :redirect_uri => 'postmessage' }.merge(token_params.to_hash(:symbolize_keys => true)),
-                                     deep_symbolize(options.auth_token_params || {}))
+          client.auth_code.get_token(verifier, get_token_options('postmessage'), deep_symbolize(options.auth_token_params || {}))
         elsif request.params['code'] && request.params['redirect_uri']
           verifier = request.params['code']
           redirect_uri = request.params['redirect_uri']
-          client.auth_code.get_token(verifier, { :redirect_uri => redirect_uri }.merge(token_params.to_hash(:symbolize_keys => true)),
-                                     deep_symbolize(options.auth_token_params || {}))
+          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
         elsif verify_token(request.params['id_token'], request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         else
@@ -110,6 +108,10 @@ module OmniAuth
       alias_method :build_access_token, :custom_build_access_token
 
       private
+
+      def get_token_options(redirect_uri)
+        { :redirect_uri => redirect_uri }.merge(token_params.to_hash(:symbolize_keys => true))
+      end
 
       def prune!(hash)
         hash.delete_if do |_, v|
