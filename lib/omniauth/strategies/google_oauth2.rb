@@ -1,6 +1,8 @@
 require 'multi_json'
 require 'jwt'
 require 'omniauth/strategies/oauth2'
+require 'uri'
+require 'cgi'
 
 module OmniAuth
   module Strategies
@@ -135,6 +137,8 @@ module OmniAuth
           u.path = u.path.gsub('//', '/')
         end
 
+        u.query = strip_unnecessary_query_parameters(u.query)
+
         u.to_s
       end
 
@@ -153,6 +157,22 @@ module OmniAuth
         image_params << 'c' if options[:image_aspect_ratio] == 'square'
 
         '/' + image_params.join('-')
+      end
+
+      def strip_unnecessary_query_parameters(query_parameters)
+        # strip `sz` query parameter (Google sets sz=50 by default)
+        # since they override `image_size` options but don't strip
+        # all query parameters that may have a valid purpose.
+        return nil if query_parameters.nil?
+
+        params = CGI.parse(query_parameters)
+        stripped_params = params.delete_if { |key| key == "sz" }
+
+        # don't return an empty Hash since that would result
+        # in URLs with a trailing ? character: http://image.url?
+        return nil if stripped_params.empty?
+
+        URI.encode_www_form(stripped_params)
       end
 
       def verify_token(id_token, access_token)
