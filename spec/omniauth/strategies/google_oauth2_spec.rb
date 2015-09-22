@@ -420,6 +420,24 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
       end
 
+      it 'should handle a picture with a size query parameter correctly' do
+        @options = {:image_size => 50}
+        allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg?sz=50'} }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
+      end
+
+      it 'should handle a picture with a size query parameter and other valid query parameters correctly' do
+        @options = {:image_size => 50}
+        allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg?sz=50&hello=true&life=42'} }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg?hello=true&life=42')
+      end
+
+      it 'should handle a picture with other valid query parameters correctly' do
+        @options = {:image_size => 50}
+        allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg?hello=true&life=42'} }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg?hello=true&life=42')
+      end
+
       it 'should return the image with width and height specified in the `image_size` option' do
         @options = {:image_size => {:width => 50, :height => 40}}
         allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
@@ -455,7 +473,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(subject).to receive(:raw_info) { {'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg'} }
       expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
     end
-    
+
     it 'should return correct image if google image url has double https' do
       allow(subject).to receive(:raw_info) { {'picture' => 'https:https://lh3.googleusercontent.com/url/photo.jpg'} }
       expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')

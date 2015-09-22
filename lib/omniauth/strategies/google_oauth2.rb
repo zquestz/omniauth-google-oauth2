@@ -1,6 +1,7 @@
 require 'multi_json'
 require 'jwt'
 require 'omniauth/strategies/oauth2'
+require 'addressable/uri'
 
 module OmniAuth
   module Strategies
@@ -127,13 +128,16 @@ module OmniAuth
       def image_url
         return nil unless raw_info['picture']
 
-        u = URI.parse(raw_info['picture'].gsub('https:https', 'https'))
+        u = Addressable::URI.parse(raw_info['picture'].gsub('https:https', 'https'))
+
         path_index = u.path.to_s.index('/photo.jpg')
 
         if path_index && image_size_opts_passed?
           u.path.insert(path_index, image_params)
           u.path = u.path.gsub('//', '/')
         end
+
+        u.query_values = strip_unnecessary_query_parameters(u.query_values)
 
         u.to_s
       end
@@ -153,6 +157,18 @@ module OmniAuth
         image_params << 'c' if options[:image_aspect_ratio] == 'square'
 
         '/' + image_params.join('-')
+      end
+
+      def strip_unnecessary_query_parameters(query_values)
+        # strip `sz` parameter (defaults to sz=50) which overrides `image_size` options
+        return nil unless query_values
+
+        query_hash = query_values.delete_if { |key, value| key == "sz" }
+
+        # an empty Hash would cause a ? character in the URL: http://image.url?
+        return nil if query_hash.empty?
+
+        query_hash
       end
 
       def verify_token(id_token, access_token)
