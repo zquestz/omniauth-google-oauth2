@@ -163,7 +163,7 @@ module OmniAuth
         # strip `sz` parameter (defaults to sz=50) which overrides `image_size` options
         return nil unless query_values
 
-        query_hash = query_values.delete_if { |key| key == "sz" }
+        query_hash = query_values.delete_if { |key, value| key == "sz" }
 
         # an empty Hash would cause a ? character in the URL: http://image.url?
         return nil if query_hash.empty?
