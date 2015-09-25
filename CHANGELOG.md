@@ -1,6 +1,24 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.2.7 - 2014-10-26
+
+### Added
+- Now strips out the 'sz' parameter from profile image urls.
+- Now uses 'addressable' gem for URI actions.
+- Added image data to extras hash.
+- Override validation on JWT token for open_id token.
+- Handle authorization codes coming from an installed applications.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Fixes double slashes in google image urls.
+
 ## 0.2.6 - 2014-10-26
 
 ### Added
