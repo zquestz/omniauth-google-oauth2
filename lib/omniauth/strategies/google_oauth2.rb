@@ -11,11 +11,9 @@ module OmniAuth
       DEFAULT_SCOPE = "email,profile"
 
       option :name, 'google_oauth2'
-
       option :skip_friends, true
-
       option :skip_image_info, true
-
+      option :skip_jwt, false
       option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri, :include_granted_scopes, :openid_realm]
 
       option :client_options, {
@@ -59,7 +57,7 @@ module OmniAuth
       extra do
         hash = {}
         hash[:id_token] = access_token['id_token']
-        if !access_token['id_token'].nil?
+        if !options[:skip_jwt] && !access_token['id_token'].nil?
           hash[:id_info] = JWT.decode(
             access_token['id_token'], nil, false, {
               :verify_iss => true,
