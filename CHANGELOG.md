@@ -1,7 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## 0.2.7 - 2014-10-26
+## 0.2.8 - 2015-10-01
+
+### Added
+- Added skip_jwt option to bypass JWT decoding in case you get decoding errors.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Resolved JWT::InvalidIatError. https://github.com/zquestz/omniauth-google-oauth2/issues/195
+
+## 0.2.7 - 2015-09-25
 
 ### Added
 - Now strips out the 'sz' parameter from profile image urls.

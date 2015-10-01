@@ -293,7 +293,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
           expect(subject.extra).to include(:id_token => id_token)
         end
 
-        it 'should include id_info when id_token set on the access_token' do
+        it 'should include id_info when id_token is set on the access_token and skip_jwt is false' do
+          subject.options[:skip_jwt] = false
+          expect(subject.extra).to include(:id_info => token_info)
+        end
+
+        it 'should not include id_info when id_token is set on the access_token and skip_jwt is true' do
+          subject.options[:skip_jwt] = true
+          expect(subject.extra).not_to have_key(:id_info)
+        end
+
+        it 'should include id_info when id_token is set on the access_token by default' do
           expect(subject.extra).to include(:id_info => token_info)
         end
       end
