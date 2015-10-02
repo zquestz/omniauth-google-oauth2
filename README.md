@@ -274,6 +274,14 @@ class ApplicationController < ActionController::Base
 
 and add ```skip_before_filter :verify_authenticity_token``` in your omniauth callback controller because it is already verified by omniauth state. And then you no need to add ```:provider_ignores_state => true``` in your omniauth initializer.
 
+## Fixing Protocol Mismatch for `redirect_uri` in Rails
+
+Just set the `full_host` in OmniAuth based on the Rails.env.
+
+```
+# app/initialisers/omniauth.rb
+OmniAuth.config.full_host = Rails.env.production? ? 'https://domain.com' : 'http://localhost:3000'
+```
 
 ## Build Status
 [![Build Status](https://travis-ci.org/zquestz/omniauth-google-oauth2.png)](https://travis-ci.org/zquestz/omniauth-google-oauth2)
