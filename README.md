@@ -281,7 +281,7 @@ and add ```skip_before_filter :verify_authenticity_token``` in your omniauth cal
 Just set the `full_host` in OmniAuth based on the Rails.env.
 
 ```
-# app/initialisers/omniauth.rb
+# config/initialisers/omniauth.rb
 OmniAuth.config.full_host = Rails.env.production? ? 'https://domain.com' : 'http://localhost:3000'
 ```
 
