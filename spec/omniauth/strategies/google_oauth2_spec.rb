@@ -255,9 +255,15 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe '#callback_path' do
-    it 'has the correct callback path' do
+    it 'has the correct default callback path' do
       expect(subject.callback_path).to eq('/auth/google_oauth2/callback')
     end
+
+    it 'should set the callback_path parameter if present' do
+      @options = {:callback_path => '/auth/foo/callback'}
+      expect(subject.callback_path).to eq('/auth/foo/callback')
+    end
+
   end
 
   describe '#extra' do
@@ -531,10 +537,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(token.client).to eq(:client)
     end
 
-    it 'should call super if this is not an AJAX request' do
+    it 'should use callback_url without query_string if this is not an AJAX request' do
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return('code' => 'valid_code')
-      expect(subject).to receive(:orig_build_access_token)
+
+      client = double(:client)
+      auth_code = double(:auth_code)
+      allow(client).to receive(:auth_code).and_return(auth_code)
+      allow(subject).to receive(:callback_url).and_return('redirect_uri_without_query_string')
+
+      expect(subject).to receive(:client).and_return(client)
+      expect(auth_code).to receive(:get_token).with('valid_code', { :redirect_uri => 'redirect_uri_without_query_string'}, {})
       subject.build_access_token
     end
   end
