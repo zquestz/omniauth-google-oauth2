@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.2.9 - 2015-10-29
+
+### Added
+- Nothing.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Issue with omniauth-oauth2 where redirect_uri was handled improperly. We now lock the dependency to ~> 1.3.1
+
 ## 0.2.8 - 2015-10-01
 
 ### Added
