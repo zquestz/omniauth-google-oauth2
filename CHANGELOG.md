@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.2.10 - 2015-11-05
+
+### Added
+- Nothing.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Removed some checks on the id_token. Now only parses the id_token in the JWT processing.
+
+### Fixed
+- Nothing.
+
 ## 0.2.9 - 2015-10-29
 
 ### Added
