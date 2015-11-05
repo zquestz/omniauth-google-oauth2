@@ -97,7 +97,7 @@ module OmniAuth
           verifier = request.params['code']
           redirect_uri = request.params['redirect_uri']
           client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
-        elsif verify_token(request.params['id_token'], request.params['access_token'])
+        elsif verify_token(request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         else
           orig_build_access_token
@@ -169,13 +169,10 @@ module OmniAuth
         query_hash
       end
 
-      def verify_token(id_token, access_token)
-        return false unless (id_token && access_token)
-
-        raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v2/tokeninfo', :params => {
-          :id_token => id_token,
-          :access_token => access_token
-        }).parsed
+      def verify_token(access_token)
+        return false unless access_token
+        raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v2/tokeninfo',
+                                      params: { access_token: access_token }).parsed
         raw_response['issued_to'] == options.client_id
       end
     end
