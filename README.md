@@ -67,7 +67,7 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `name`: The name of the strategy. The default name is `google_oauth2` but it can be changed to any value, for example `google`. The OmniAuth URL will thus change to `/auth/google` and the `provider` key in the auth hash will then return `google`.
 
-* `access_type`: Defaults to `offline`, so a refresh token is sent to be used when the user is not present at the browser. Can be set to `online`. Note that if you need a refresh token, google requires you to also to specify the option `prompt: 'consent'`, which is not a default.
+* `access_type`: Defaults to `offline`, so a refresh token is sent to be used when the user is not present at the browser. Can be set to `online`. More about [offline access](https://developers.google.com/identity/protocols/OAuth2WebServer#offline)
 
 * `hd`: (Optional) Limit sign-in to a particular Google Apps hosted domain.  More information at: https://developers.google.com/accounts/docs/OpenIDConnect#hd-param
 

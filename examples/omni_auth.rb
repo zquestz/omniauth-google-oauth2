@@ -11,11 +11,9 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   }
 
   # Manual setup for offline access with a refresh token.
-  # The prompt must be set to 'consent'
   #
   # provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {
   #   :access_type => 'offline',
-  #   :prompt => 'consent'
   # }
 
   # Custom scope supporting youtube. If you are customizing scopes, remember
