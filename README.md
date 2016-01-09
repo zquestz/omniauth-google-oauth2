@@ -1,3 +1,6 @@
+[![Gem Version](https://badge.fury.io/rb/omniauth-google-oauth2.svg)](https://badge.fury.io/rb/omniauth-google-oauth2)
+[![Build Status](https://travis-ci.org/zquestz/omniauth-google-oauth2.png)](https://travis-ci.org/zquestz/omniauth-google-oauth2)
+
 # OmniAuth Google OAuth2 Strategy
 
 Strategy to authenticate with Google via OAuth2 in OmniAuth.
@@ -284,10 +287,6 @@ Just set the `full_host` in OmniAuth based on the Rails.env.
 # config/initialisers/omniauth.rb
 OmniAuth.config.full_host = Rails.env.production? ? 'https://domain.com' : 'http://localhost:3000'
 ```
-
-## Build Status
-[![Build Status](https://travis-ci.org/zquestz/omniauth-google-oauth2.png)](https://travis-ci.org/zquestz/omniauth-google-oauth2)
-
 
 ## License
 
