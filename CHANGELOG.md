@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 - 2016-01-09
+
+### Added
+- Updated verify_token to use the v3 tokeninfo endpoint.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Compatibility with omniauth-oauth2 1.4.0
+
 ## 0.2.10 - 2015-11-05
 
 ### Added
