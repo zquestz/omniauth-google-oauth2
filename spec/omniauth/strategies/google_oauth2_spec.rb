@@ -544,19 +544,18 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.options.client_options[:connection_build] = proc do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/oauth2/v2/tokeninfo?access_token=valid_access_token') do |env|
+          stub.get('/oauth2/v3/tokeninfo?access_token=valid_access_token') do |env|
             [200, {'Content-Type' => 'application/json; charset=UTF-8'}, MultiJson.encode(
-              :issued_to => '000000000000.apps.googleusercontent.com',
-              :audience => '000000000000.apps.googleusercontent.com',
-              :user_id => '000000000000000000000',
-              :scope => 'profile email',
-              :expires_in => 3514,
-              :email => 'me@example.com',
-              :verified_email => true,
-              :access_type => 'online'
+              :aud => "000000000000.apps.googleusercontent.com",
+              :sub => "123456789",
+              :email_verified => "true",
+              :email => "example@example.com",
+              :access_type => "offline",
+              :scope => "profile email",
+              :expires_in => 436
             )]
           end
-          stub.get('/oauth2/v2/tokeninfo?access_token=invalid_access_token') do |env|
+          stub.get('/oauth2/v3/tokeninfo?access_token=invalid_access_token') do |env|
             [400, {'Content-Type' => 'application/json; charset=UTF-8'}, MultiJson.encode(:error_description => 'Invalid Value')]
           end
         end
