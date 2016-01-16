@@ -590,4 +590,36 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       }.to raise_error(OAuth2::Error)
     end
   end
+
+  describe 'verify_hd' do
+    let(:client) do
+      OAuth2::Client.new('abc', 'def') do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/plus/v1/people/me/openIdConnect') do |env|
+            [200, {'Content-Type' => 'application/json; charset=UTF-8'}, MultiJson.encode(
+              :hd => 'example.com',
+            )]
+          end
+        end
+      end
+    end
+    let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
+
+    it 'should verify hd if options hd is not set' do
+      expect(subject.send(:verify_hd, access_token)).to eq(true)
+    end
+
+    it 'should verify hd if options hd is set and correct' do
+      subject.options.hd = 'example.com'
+      expect(subject.send(:verify_hd, access_token)).to eq(true)
+    end
+
+    it 'should raise error if options hd is set and wrong' do
+      subject.options.hd = 'invalid.com'
+      expect {
+        subject.send(:verify_hd, access_token)
+      }.to raise_error(OmniAuth::Strategies::GoogleOauth2::CallbackError)
+    end
+  end
 end
