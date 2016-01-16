@@ -90,6 +90,7 @@ module OmniAuth
       end
 
       def custom_build_access_token
+        access_token =
         if request.xhr? && request.params['code']
           verifier = request.params['code']
           client.auth_code.get_token(verifier, get_token_options('postmessage'), deep_symbolize(options.auth_token_params || {}))
@@ -103,6 +104,9 @@ module OmniAuth
           verifier = request.params["code"]
           client.auth_code.get_token(verifier, get_token_options(callback_url), deep_symbolize(options.auth_token_params))
         end
+
+        verify_hd(access_token)
+        access_token
       end
       alias_method :build_access_token, :custom_build_access_token
 
@@ -180,6 +184,13 @@ module OmniAuth
         raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo',
                                       params: { access_token: access_token }).parsed
         raw_response['aud'] == options.client_id
+      end
+
+      def verify_hd(access_token)
+        return true unless options.hd
+        @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
+        raise CallbackError.new(:invalid_hd, "Invalid Hosted Domain") unless @raw_info['hd'] == options.hd
+        true
       end
     end
   end
