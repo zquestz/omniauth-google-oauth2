@@ -228,6 +228,8 @@ This flow is immune to replay attacks, and conveys no useful information to a ma
 The omniauth-google-oauth2 gem supports this mode of operation out of the box.  Implementors simply need to add the appropriate JavaScript to their web page, and they can take advantage of this flow.  An example JavaScript snippet follows.
 
 ```javascript
+// Basic hybrid auth example following the pattern at:
+// https://developers.google.com/api-client-library/javascript/features/authentication#Authexample
 jQuery(function() {
   return $.ajax({
     url: 'https://apis.google.com/js/client:plus.js?onload=gpAsyncInit',
@@ -237,18 +239,28 @@ jQuery(function() {
 });
 
 window.gpAsyncInit = function() {
+  gapi.auth.authorize({
+    immediate: true,
+    response_type: 'code',
+    cookie_policy: 'single_host_origin',
+    client_id: 'YOUR_CLIENT_ID',
+    scope: 'email profile'
+  }, function(response) {
+    return;
+  });
   $('.googleplus-login').click(function(e) {
     e.preventDefault();
     gapi.auth.authorize({
-      immediate: true,
+      immediate: false,
       response_type: 'code',
       cookie_policy: 'single_host_origin',
-      client_id: '000000000000.apps.googleusercontent.com',
+      client_id: 'YOUR_CLIENT_ID',
       scope: 'email profile'
     }, function(response) {
       if (response && !response.error) {
-        // google authentication succeed, now post data to server and handle data securely
-        jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", data: response,
+        // google authentication succeed, now post data to server.
+        jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", 
+data: response,
           success: function(data) {
             // response from server
           }
@@ -259,6 +271,7 @@ window.gpAsyncInit = function() {
     });
   });
 };
+
 ```
 
 ### Omniauth state
