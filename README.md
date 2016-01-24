@@ -25,7 +25,7 @@ Then `bundle install`.
 
 * Go to 'https://console.developers.google.com'
 * Select your project.
-* Click 'APIs & auth'
+* Click 'Enable and manage APIs'.
 * Make sure "Contacts API" and "Google+ API" are on.
 * Go to Credentials, then select the "OAuth consent screen" tab on top, and provide an 'EMAIL ADDRESS' and a 'PRODUCT NAME'
 * Wait 10 minutes for changes to take effect.
