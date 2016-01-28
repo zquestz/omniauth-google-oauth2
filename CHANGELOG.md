@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.3.1 - 2016-01-28
+
+### Added
+- Verify Hosted Domain if hd is set in options.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
 ## 0.3.0 - 2016-01-09
 
 ### Added
