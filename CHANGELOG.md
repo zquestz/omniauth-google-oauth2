@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Nothing.
 
 ### Removed
-- Nothing.
+- Dependency on addressable.
 
 ### Fixed
 - Nothing.
