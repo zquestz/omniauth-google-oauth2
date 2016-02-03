@@ -72,7 +72,7 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `access_type`: Defaults to `offline`, so a refresh token is sent to be used when the user is not present at the browser. Can be set to `online`. More about [offline access](https://developers.google.com/identity/protocols/OAuth2WebServer#offline)
 
-* `hd`: (Optional) Limit sign-in to a particular Google Apps hosted domain.  More information at: https://developers.google.com/accounts/docs/OpenIDConnect#hd-param
+* `hd`: (Optional) Limit sign-in to a particular Google Apps hosted domain. This can be simply string `'domain.com'` or an array `%w(domain.com domain.co)`. More information at: https://developers.google.com/accounts/docs/OpenIDConnect#hd-param
 
 * `skip_jwt`: Skip JWT processing. This is for users who are seeing JWT decoding errors with the `iat` field.
 

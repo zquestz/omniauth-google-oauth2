@@ -615,8 +615,20 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(subject.send(:verify_hd, access_token)).to eq(true)
     end
 
+    it 'should verify hd if options hd is set as an array and is correct' do
+      subject.options.hd = ['example.com', 'example.co']
+      expect(subject.send(:verify_hd, access_token)).to eq(true)
+    end
+
     it 'should raise error if options hd is set and wrong' do
       subject.options.hd = 'invalid.com'
+      expect {
+        subject.send(:verify_hd, access_token)
+      }.to raise_error(OmniAuth::Strategies::GoogleOauth2::CallbackError)
+    end
+
+    it 'should raise error if options hd is set as an array and is not correct' do
+      subject.options.hd = ['invalid.com', 'invalid.co']
       expect {
         subject.send(:verify_hd, access_token)
       }.to raise_error(OmniAuth::Strategies::GoogleOauth2::CallbackError)
