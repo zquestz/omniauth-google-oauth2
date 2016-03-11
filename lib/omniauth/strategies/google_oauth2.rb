@@ -68,7 +68,8 @@ module OmniAuth
               :verify_expiration => true,
               :verify_not_before => true,
               :verify_iat => true,
-              :verify_jti => false
+              :verify_jti => false,
+              :leeway => options[:issued_at_leeway] || 0
             }).first
         end
         hash[:raw_info] = raw_info unless skip_info?
