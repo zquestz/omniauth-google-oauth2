@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 - 2016-03-11
+
+### Added
+- Addedd ability to specify multiple hosted domains.
+- Added a default leeway of 1 minute to JWT token validation.
+- Now requires ruby-jwt 1.5.x.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Removed support for ruby 1.9.3 as ruby-jwt 1.5.x does not support it.
+
+### Fixed
+- Nothing.
+
 ## 0.3.1 - 2016-01-28
 
 ### Added
