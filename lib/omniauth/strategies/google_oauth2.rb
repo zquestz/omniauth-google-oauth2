@@ -14,6 +14,7 @@ module OmniAuth
       option :skip_friends, true
       option :skip_image_info, true
       option :skip_jwt, false
+      option :jwt_leeway, 60
       option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri, :include_granted_scopes, :openid_realm]
 
       option :client_options, {
@@ -68,7 +69,8 @@ module OmniAuth
               :verify_expiration => true,
               :verify_not_before => true,
               :verify_iat => true,
-              :verify_jti => false
+              :verify_jti => false,
+              :leeway => options[:jwt_leeway]
             }).first
         end
         hash[:raw_info] = raw_info unless skip_info?

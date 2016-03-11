@@ -74,7 +74,9 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `hd`: (Optional) Limit sign-in to a particular Google Apps hosted domain. This can be simply string `'domain.com'` or an array `%w(domain.com domain.co)`. More information at: https://developers.google.com/accounts/docs/OpenIDConnect#hd-param
 
-* `skip_jwt`: Skip JWT processing. This is for users who are seeing JWT decoding errors with the `iat` field.
+* `jwt_leeway`: Number of seconds passed to the JWT library as leeway. Defaults to 60 seconds.
+
+* `skip_jwt`: Skip JWT processing. This is for users who are seeing JWT decoding errors with the `iat` field. Always try adjusting the leeway before disabling JWT processing.
 
 * `login_hint`: When your app knows which user it is trying to authenticate, it can provide this parameter as a hint to the authentication server. Passing this hint suppresses the account chooser and either pre-fill the email box on the sign-in form, or select the proper session (if the user is using multiple sign-in), which can help you avoid problems that occur if your app logs in the wrong user account. The value can be either an email address or the sub string, which is equivalent to the user's Google+ ID.
 
@@ -303,7 +305,7 @@ OmniAuth.config.full_host = Rails.env.production? ? 'https://domain.com' : 'http
 
 ## License
 
-Copyright (c) 2015 by Josh Ellithorpe
+Copyright (c) 2016 by Josh Ellithorpe
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

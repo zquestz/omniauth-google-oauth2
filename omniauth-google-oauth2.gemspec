@@ -14,9 +14,11 @@ Gem::Specification.new do |gem|
   gem.files         = `git ls-files`.split("\n")
   gem.require_paths = ["lib"]
 
+  gem.required_ruby_version = '>= 2.0'
+
   gem.add_runtime_dependency 'omniauth', '>= 1.1.1'
   gem.add_runtime_dependency 'omniauth-oauth2', '>= 1.3.1'
-  gem.add_runtime_dependency 'jwt', '~> 1.0'
+  gem.add_runtime_dependency 'jwt', '~> 1.5.0'
   gem.add_runtime_dependency 'multi_json', '~> 1.3'
 
   gem.add_development_dependency 'rspec', '>= 2.14.0'
