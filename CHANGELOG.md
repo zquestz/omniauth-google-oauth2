@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.4.1 - 2016-03-14
+
+### Added
+- Nothing.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Fixed JWT iat leeway by requiring ruby-jwt 1.5.2
+
 ## 0.4.0 - 2016-03-11
 
 ### Added
