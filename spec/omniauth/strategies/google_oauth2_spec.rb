@@ -580,6 +580,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(subject.send(:verify_token, 'valid_access_token')).to eq(true)
     end
 
+    it 'should verify token if access_token is valid and app_id authorized' do
+      subject.options.authorized_client_ids = ["000000000000.apps.googleusercontent.com"]
+      expect(subject.send(:verify_token, 'valid_access_token')).to eq(true)
+    end
+
     it 'should not verify token if access_token is valid but app_id is false' do
       expect(subject.send(:verify_token, 'valid_access_token')).to eq(false)
     end
