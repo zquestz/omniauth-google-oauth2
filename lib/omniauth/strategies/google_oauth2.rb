@@ -16,6 +16,7 @@ module OmniAuth
       option :skip_jwt, false
       option :jwt_leeway, 60
       option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri, :include_granted_scopes, :openid_realm]
+      option :authorized_client_ids, []
 
       option :client_options, {
         :site          => 'https://accounts.google.com',
@@ -185,7 +186,7 @@ module OmniAuth
         return false unless access_token
         raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo',
                                       params: { access_token: access_token }).parsed
-        raw_response['aud'] == options.client_id
+        raw_response['aud'] == options.client_id || options.authorized_client_ids.include?(raw_response['aud'])
       end
 
       def verify_hd(access_token)
