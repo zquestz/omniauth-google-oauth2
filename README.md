@@ -210,7 +210,10 @@ end
 
 For your views you can login using:
 
-```ruby
+```erb
+<%= link_to "Sign in with Google", user_google_oauth2_omniauth_authorize_path %>
+
+<%# Devise prior 4.1.0: %>
 <%= link_to "Sign in with Google", user_omniauth_authorize_path(:google_oauth2) %>
 ```
 
