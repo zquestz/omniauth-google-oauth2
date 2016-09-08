@@ -279,6 +279,10 @@ data: response,
 
 ```
 
+#### Note about CORS
+
+If you're making POST requests to `/auth/google_oauth2/callback` from another domain, then you need to make sure `'X-Requested-With': 'XMLHttpRequest'` header is included with your request, otherwise your server might respond with `OAuth2::Error, : Invalid Value` error.
+
 ### Omniauth state
 
 If you'd like to use omniauth state param, you can implement it by yourself using rails csrf token. For example:
