@@ -155,6 +155,8 @@ Here's an example of an authentication hash available in the callback by accessi
 
 First define your application id and secret in `config/initializers/devise.rb`. Do not use the snippet mentioned in the [Usage](https://github.com/zquestz/omniauth-google-oauth2#usage) section.
 
+Configuration options can be passed as the last parameter here as key/value pairs.
+
 ```ruby
 config.omniauth :google_oauth2, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", { }
 ```
