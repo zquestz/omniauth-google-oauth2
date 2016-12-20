@@ -44,14 +44,14 @@ You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
 
 For more examples please check out `examples/omni_auth.rb`
 
-NOTE: While developing your application, if you change the scope in the initializer you will need to restart your app server. Remember that 'email' and 'profile' scopes are required!
+NOTE: While developing your application, if you change the scope in the initializer you will need to restart your app server. Remember that either the 'email' or 'profile' scope is required!
 
 ## Configuration
 
 You can configure several options, which you pass in to the `provider` method via a hash:
 
 * `scope`: A comma-separated list of permissions you want to request from the user. See the [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) for a full list of available permissions. Caveats:
-  * The `email` and `profile` scopes are used by default. By defining your own `scope`, you override these defaults. If you need these scopes, don't forget to add them yourself!
+  * The `email` and `profile` scopes are used by default. By defining your own `scope`, you override these defaults, but Google requires at least one of `email` or `profile`, so make sure to add at least one of them to your scope!
   * Scopes starting with `https://www.googleapis.com/auth/` do not need that prefix specified. So while you can use the smaller scope `books` since that permission starts with the mentioned prefix, you should use the full scope URL `https://docs.google.com/feeds/` to access a user's docs, for example.
 
 * `redirect_uri`: Override the redirect_uri used by the gem.
