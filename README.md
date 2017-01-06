@@ -288,24 +288,6 @@ data: response,
 
 If you're making POST requests to `/auth/google_oauth2/callback` from another domain, then you need to make sure `'X-Requested-With': 'XMLHttpRequest'` header is included with your request, otherwise your server might respond with `OAuth2::Error, : Invalid Value` error.
 
-### Omniauth state
-
-If you'd like to use omniauth state param, you can implement it by yourself using rails csrf token. For example:
-
-```ruby
-class ApplicationController < ActionController::Base
-  before_action :initialize_omniauth_state
-
-  protected
-
-  def initialize_omniauth_state
-    session['omniauth.state'] = response.headers['X-CSRF-Token'] = form_authenticity_token
-  end
-...
-```
-
-and add ```skip_before_filter :verify_authenticity_token``` in your omniauth callback controller because it is already verified by omniauth state. And then you need to add ```:provider_ignores_state => true``` in your omniauth initializer.
-
 ## Fixing Protocol Mismatch for `redirect_uri` in Rails
 
 Just set the `full_host` in OmniAuth based on the Rails.env.
