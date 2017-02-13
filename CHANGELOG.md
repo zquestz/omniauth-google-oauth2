@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.5.0 - 2017-02-13
+
+### Added
+- Nothing.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Testing support for older versions of ruby not supported by OmniAuth 1.5.
+
+### Fixed
+- Nothing.
+
 ## 0.4.1 - 2016-03-14
 
 ### Added
