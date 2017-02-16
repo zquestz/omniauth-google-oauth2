@@ -624,6 +624,16 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.options.hd = ['example.com', 'example.co']
       expect(subject.send(:verify_hd, access_token)).to eq(true)
     end
+    
+    it 'should verify hd if options hd is set as an Proc and is correct' do
+      subject.options.hd = Proc.new { 'example.com' }
+      expect(subject.send(:verify_hd, access_token)).to eq(true)
+    end
+    
+    it 'should verify hd if options hd is set as an Proc returning an array and is correct' do
+      subject.options.hd = Proc.new { ['example.com', 'example.co'] }
+      expect(subject.send(:verify_hd, access_token)).to eq(true)
+    end
 
     it 'should raise error if options hd is set and wrong' do
       subject.options.hd = 'invalid.com'

@@ -192,6 +192,8 @@ module OmniAuth
       def verify_hd(access_token)
         return true unless options.hd
         @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
+        
+        options.hd = options.hd.call if options.hd.is_a? Proc
         allowed_hosted_domains = Array(options.hd)
 
         raise CallbackError.new(:invalid_hd, "Invalid Hosted Domain") unless allowed_hosted_domains.include? @raw_info['hd']
