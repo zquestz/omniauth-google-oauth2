@@ -511,6 +511,20 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.build_access_token
     end
 
+    it 'should use a hybrid authorization request_uri if this is an AJAX request (mobile) with a code parameter' do
+      allow(request).to receive(:xhr?).and_return(true)
+      allow(request).to receive(:params).and_return('code' => 'valid_code', 'redirect_uri' => '')
+
+      client = double(:client)
+      auth_code = double(:auth_code)
+      allow(client).to receive(:auth_code).and_return(auth_code)
+      expect(subject).to receive(:client).and_return(client)
+      expect(auth_code).to receive(:get_token).with('valid_code', { :redirect_uri => ''}, {})
+
+      expect(subject).not_to receive(:orig_build_access_token)
+      subject.build_access_token
+    end
+
     it 'should use the request_uri from params if this not an AJAX request (request from installed app) with a code parameter' do
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return('code' => 'valid_code', 'redirect_uri' => 'redirect_uri')

@@ -284,6 +284,12 @@ data: response,
 
 ```
 
+#### Note about mobile clients (iOS, Android)
+
+The documentation at https://developers.google.com/identity/sign-in/ios/offline-access specifies the _REDIRECT_URI_ to be either a set value or an EMPTY string for mobile logins to work. Else, you will run into _redirect_uri_mismatch_ errors.
+
+In that case, ensure to send an additional parameter `redirect_uri=` (empty string) to the `/auth/google_oauth2/callback` URL from your mobile device.
+
 #### Note about CORS
 
 If you're making POST requests to `/auth/google_oauth2/callback` from another domain, then you need to make sure `'X-Requested-With': 'XMLHttpRequest'` header is included with your request, otherwise your server might respond with `OAuth2::Error, : Invalid Value` error.
