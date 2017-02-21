@@ -96,7 +96,8 @@ module OmniAuth
         access_token =
         if request.xhr? && request.params['code']
           verifier = request.params['code']
-          client.auth_code.get_token(verifier, get_token_options('postmessage'), deep_symbolize(options.auth_token_params || {}))
+          redirect_uri = request.params['redirect_uri'] || 'postmessage'
+          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
         elsif request.params['code'] && request.params['redirect_uri']
           verifier = request.params['code']
           redirect_uri = request.params['redirect_uri']
