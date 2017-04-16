@@ -80,8 +80,21 @@ module OmniAuth
         prune! hash
       end
 
+      # Mimic people#openIdConnect response
       def raw_info
-        @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
+        @raw_info ||= Hash.new.tap do |data|
+          raw = access_token.get('https://www.googleapis.com/plus/v1/people/me').parsed
+
+          data['email']          = raw['emails'].first.try(:[], 'value')
+          data['email_verified'] = !!data['email']
+          data['gender']         = raw['gender']
+          data['family_name']    = raw['name'].try(:[], 'familyName')
+          data['given_name']     = raw['name'].try(:[], 'givenName')
+          data['kind']           = raw['kind']
+          data['name']           = raw['displayName']
+          data['profile']        = raw['url']
+          data['picture']        = raw['image'].try(:[], 'url')
+        end
       end
 
       def raw_friend_info(id)
