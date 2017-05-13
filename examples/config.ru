@@ -18,10 +18,69 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 class App < Sinatra::Base
   get '/' do
     <<-HTML
-    <ul>
-      <li><a href='/auth/google_oauth2'>Sign in with Google</a></li>
-    </ul>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Google OAuth2 Example</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+      jQuery(function() {
+        return $.ajax({
+          url: 'https://apis.google.com/js/client:plus.js?onload=gpAsyncInit',
+          dataType: 'script',
+          cache: true
+        });
+      });
+
+      window.gpAsyncInit = function() {
+        gapi.auth.authorize({
+          immediate: true,
+          response_type: 'code',
+          cookie_policy: 'single_host_origin',
+          client_id: 'YOUR_CLIENT_ID',
+          scope: 'email profile'
+        }, function(response) {
+          return;
+        });
+        $('.googleplus-login').click(function(e) {
+          e.preventDefault();
+          gapi.auth.authorize({
+            immediate: false,
+            response_type: 'code',
+            cookie_policy: 'single_host_origin',
+            client_id: 'YOUR_CLIENT_ID',
+            scope: 'email profile'
+          }, function(response) {
+            if (response && !response.error) {
+              // google authentication succeed, now post data to server.
+              jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", data: response,
+                success: function(data) {
+                  // Log the data returning from google.
+                  console.log(data)
+                }
+              });
+            } else {
+              // google authentication failed.
+              console.log("FAILED")
+            }
+          });
+        });
+      };
+    </script>
+  </head>
+  <body>
+  <ul>
+    <li><a href='/auth/google_oauth2'>Sign in with Google</a></li>
+    <li><a href='#' class="googleplus-login">Sign in with Google via AJAX</a></li>
+  </ul>
+  </body>
+</html>
     HTML
+  end
+
+  post '/auth/:provider/callback' do
+    content_type 'text/plain'
+    request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
   end
 
   get '/auth/:provider/callback' do
@@ -39,7 +98,8 @@ use Rack::Session::Cookie, :secret => ENV['RACK_COOKIE_SECRET']
 
 use OmniAuth::Builder do
   # For additional provider examples please look at 'omni_auth.rb'
-  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {access_type: "offline", prompt: "consent", scope: 'userinfo.email,calendar'}
+  # The key provider_ignores_state is only for AJAX flows. It is not recommended for normal logins.
+  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {access_type: "offline", prompt: "consent", provider_ignores_state: true, scope: 'userinfo.email,calendar'}
 end
 
 run App.new
