@@ -16,3 +16,5 @@ Metrics/PerceivedComplexity:
   Enabled: false
 Style/FileName:
   Enabled: false
+Style/MutableConstant:
+  Enabled: false
