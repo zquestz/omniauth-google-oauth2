@@ -99,7 +99,7 @@ use Rack::Session::Cookie, :secret => ENV['RACK_COOKIE_SECRET']
 use OmniAuth::Builder do
   # For additional provider examples please look at 'omni_auth.rb'
   # The key provider_ignores_state is only for AJAX flows. It is not recommended for normal logins.
-  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {access_type: "offline", prompt: "consent", provider_ignores_state: true, scope: 'userinfo.email,calendar'}
+  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {access_type: "offline", prompt: "consent", provider_ignores_state: true, scope: 'email,profile,calendar'}
 end
 
 run App.new

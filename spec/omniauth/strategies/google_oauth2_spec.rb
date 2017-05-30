@@ -97,6 +97,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         @options = {:hd => 'example.com'}
         expect(subject.authorize_params['hd']).to eq('example.com')
       end
+
+      it 'should set the hd parameter and work with nil hd (gmail)' do
+        @options = {:hd => nil }
+        expect(subject.authorize_params['hd']).to eq(nil)
+      end
     end
 
     describe 'login_hint' do
@@ -625,6 +630,36 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
     let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
 
+    context 'when domain is nil' do
+      let(:client) do
+        OAuth2::Client.new('abc', 'def') do |builder|
+          builder.request :url_encoded
+          builder.adapter :test do |stub|
+            stub.get('/plus/v1/people/me/openIdConnect') do |env|
+              [200, {'Content-Type' => 'application/json; charset=UTF-8'}, MultiJson.encode({})]
+            end
+          end
+        end
+      end
+
+      it 'should verify hd if options hd is set and correct' do
+        subject.options.hd = nil
+        expect(subject.send(:verify_hd, access_token)).to eq(true)
+      end
+
+      it 'should verify hd if options hd is set as an array and is correct' do
+        subject.options.hd = ['example.com', 'example.co', nil]
+        expect(subject.send(:verify_hd, access_token)).to eq(true)
+      end
+
+      it 'should raise an exception if nil is not included' do
+        subject.options.hd = ['example.com', 'example.co']
+        expect {
+          subject.send(:verify_hd, access_token)
+        }.to raise_error(OmniAuth::Strategies::OAuth2::CallbackError)
+      end
+    end
+
     it 'should verify hd if options hd is not set' do
       expect(subject.send(:verify_hd, access_token)).to eq(true)
     end
@@ -635,7 +670,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     it 'should verify hd if options hd is set as an array and is correct' do
-      subject.options.hd = ['example.com', 'example.co']
+      subject.options.hd = ['example.com', 'example.co', nil]
       expect(subject.send(:verify_hd, access_token)).to eq(true)
     end
     
