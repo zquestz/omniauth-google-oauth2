@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'multi_json'
 require 'jwt'
 require 'omniauth/strategies/oauth2'
@@ -5,24 +7,24 @@ require 'uri'
 
 module OmniAuth
   module Strategies
+    # Main class for Google OAuth2 strategy.
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
-      BASE_SCOPE_URL = "https://www.googleapis.com/auth/"
-      BASE_SCOPES = %w[profile email openid]
-      DEFAULT_SCOPE = "email,profile"
+      BASE_SCOPE_URL = 'https://www.googleapis.com/auth/'
+      BASE_SCOPES = %w[profile email openid].freeze
+      DEFAULT_SCOPE = 'email,profile'
 
       option :name, 'google_oauth2'
       option :skip_friends, true
       option :skip_image_info, true
       option :skip_jwt, false
       option :jwt_leeway, 60
-      option :authorize_options, [:access_type, :hd, :login_hint, :prompt, :request_visible_actions, :scope, :state, :redirect_uri, :include_granted_scopes, :openid_realm]
+      option :authorize_options, %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes openid_realm]
       option :authorized_client_ids, []
 
-      option :client_options, {
-        :site          => 'https://accounts.google.com',
-        :authorize_url => '/o/oauth2/auth',
-        :token_url     => '/o/oauth2/token'
-      }
+      option :client_options,
+             site: 'https://accounts.google.com',
+             authorize_url: '/o/oauth2/auth',
+             token_url: '/o/oauth2/token'
 
       def authorize_params
         super.tap do |params|
@@ -30,30 +32,27 @@ module OmniAuth
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
 
-          raw_scope = params[:scope] || DEFAULT_SCOPE
-          scope_list = raw_scope.split(" ").map {|item| item.split(",")}.flatten
-          scope_list.map! { |s| s =~ /^https?:\/\// || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
-          params[:scope] = scope_list.join(" ")
+          params[:scope] = get_scope(params)
           params[:access_type] = 'offline' if params[:access_type].nil?
           params['openid.realm'] = params.delete(:openid_realm) unless params[:openid_realm].nil?
 
-          session['omniauth.state'] = params[:state] if params['state']
+          session['omniauth.state'] = params[:state] if params[:state]
         end
       end
 
       uid { raw_info['sub'] }
 
       info do
-        prune!({
-          :name       => raw_info['name'],
-          :email      => verified_email,
-          :first_name => raw_info['given_name'],
-          :last_name  => raw_info['family_name'],
-          :image      => image_url,
-          :urls => {
-            'Google' => raw_info['profile']
+        prune!(
+          name: raw_info['name'],
+          email: verified_email,
+          first_name: raw_info['given_name'],
+          last_name: raw_info['family_name'],
+          image: image_url,
+          urls: {
+            google: raw_info['profile']
           }
-        })
+        )
       end
 
       extra do
@@ -61,18 +60,17 @@ module OmniAuth
         hash[:id_token] = access_token['id_token']
         if !options[:skip_jwt] && !access_token['id_token'].nil?
           hash[:id_info] = JWT.decode(
-            access_token['id_token'], nil, false, {
-              :verify_iss => true,
-              'iss' => 'accounts.google.com',
-              :verify_aud => true,
-              'aud' => options.client_id,
-              :verify_sub => false,
-              :verify_expiration => true,
-              :verify_not_before => true,
-              :verify_iat => true,
-              :verify_jti => false,
-              :leeway => options[:jwt_leeway]
-            }).first
+            access_token['id_token'], nil, false, verify_iss: true,
+                                                  iss: 'accounts.google.com',
+                                                  verify_aud: true,
+                                                  aud: options.client_id,
+                                                  verify_sub: false,
+                                                  verify_expiration: true,
+                                                  verify_not_before: true,
+                                                  verify_iat: true,
+                                                  verify_jti: false,
+                                                  leeway: options[:jwt_leeway]
+          ).first
         end
         hash[:raw_info] = raw_info unless skip_info?
         hash[:raw_friend_info] = raw_friend_info(raw_info['sub']) unless skip_info? || options[:skip_friends]
@@ -93,7 +91,20 @@ module OmniAuth
       end
 
       def custom_build_access_token
-        access_token =
+        access_token = get_access_token(request)
+
+        verify_hd(access_token)
+        access_token
+      end
+      alias build_access_token custom_build_access_token
+
+      private
+
+      def callback_url
+        options[:redirect_uri] || (full_host + script_name + callback_path)
+      end
+
+      def get_access_token(request)
         if request.xhr? && request.params['code']
           verifier = request.params['code']
           redirect_uri = request.params['redirect_uri'] || 'postmessage'
@@ -105,23 +116,20 @@ module OmniAuth
         elsif verify_token(request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         else
-          verifier = request.params["code"]
+          verifier = request.params['code']
           client.auth_code.get_token(verifier, get_token_options(callback_url), deep_symbolize(options.auth_token_params))
         end
-
-        verify_hd(access_token)
-        access_token
       end
-      alias_method :build_access_token, :custom_build_access_token
 
-      private
-
-      def callback_url
-        options[:redirect_uri] || (full_host + script_name + callback_path)
+      def get_scope(params)
+        raw_scope = params[:scope] || DEFAULT_SCOPE
+        scope_list = raw_scope.split(' ').map { |item| item.split(',') }.flatten
+        scope_list.map! { |s| s =~ %r{^https?://} || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
+        scope_list.join(' ')
       end
 
       def get_token_options(redirect_uri)
-        { :redirect_uri => redirect_uri }.merge(token_params.to_hash(:symbolize_keys => true))
+        { redirect_uri: redirect_uri }.merge(token_params.to_hash(symbolize_keys: true))
       end
 
       def prune!(hash)
@@ -153,7 +161,7 @@ module OmniAuth
       end
 
       def image_size_opts_passed?
-        !!(options[:image_size] || options[:image_aspect_ratio])
+        options[:image_size] || options[:image_aspect_ratio]
       end
 
       def image_params
@@ -174,7 +182,7 @@ module OmniAuth
         return nil if query_parameters.nil?
 
         params = CGI.parse(query_parameters)
-        stripped_params = params.delete_if { |key| key == "sz" }
+        stripped_params = params.delete_if { |key| key == 'sz' }
 
         # don't return an empty Hash since that would result
         # in URLs with a trailing ? character: http://image.url?
@@ -193,11 +201,11 @@ module OmniAuth
       def verify_hd(access_token)
         return true unless options.hd
         @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
-        
+
         options.hd = options.hd.call if options.hd.is_a? Proc
         allowed_hosted_domains = Array(options.hd)
 
-        raise CallbackError.new(:invalid_hd, "Invalid Hosted Domain") unless allowed_hosted_domains.include? @raw_info['hd']
+        raise CallbackError.new(:invalid_hd, 'Invalid Hosted Domain') unless allowed_hosted_domains.include? @raw_info['hd']
         true
       end
     end

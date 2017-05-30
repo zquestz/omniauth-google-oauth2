@@ -1,19 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## 0.5.0 - 2017-02-13
+## 0.5.0 - 2017-05-29
 
 ### Added
-- Nothing.
+- Rubocop checks to specs.
+- Defaulted dev environment to ruby 2.3.4.
 
 ### Deprecated
 - Nothing.
 
 ### Removed
 - Testing support for older versions of ruby not supported by OmniAuth 1.5.
+- Key `[:urls]['Google']` no longer exists, it has been renamed to `[:urls][:google]`.
 
 ### Fixed
-- Nothing.
+- Updated all code to rubocop conventions. This includes the Ruby 1.9 hash syntax when appropriate.
+- Example javascript flow now picks up ENV vars for google key and secret.
 
 ## 0.4.1 - 2016-03-14
 

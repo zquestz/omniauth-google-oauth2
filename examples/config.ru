@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Sample app for Google OAuth2 Strategy
 # Make sure to setup the ENV variables GOOGLE_KEY and GOOGLE_SECRET
 # Run with "bundle exec rackup"
@@ -15,6 +17,7 @@ require 'omniauth-google-oauth2'
 # http://railsapps.github.io/openssl-certificate-verify-failed.html
 OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
+# Main example app for omniauth-google-oauth2
 class App < Sinatra::Base
   get '/' do
     <<-HTML
@@ -37,7 +40,7 @@ class App < Sinatra::Base
           immediate: true,
           response_type: 'code',
           cookie_policy: 'single_host_origin',
-          client_id: 'YOUR_CLIENT_ID',
+          client_id: '#{ENV['GOOGLE_KEY']}',
           scope: 'email profile'
         }, function(response) {
           return;
@@ -48,7 +51,7 @@ class App < Sinatra::Base
             immediate: false,
             response_type: 'code',
             cookie_policy: 'single_host_origin',
-            client_id: 'YOUR_CLIENT_ID',
+            client_id: '#{ENV['GOOGLE_KEY']}',
             scope: 'email profile'
           }, function(response) {
             if (response && !response.error) {
@@ -80,26 +83,38 @@ class App < Sinatra::Base
 
   post '/auth/:provider/callback' do
     content_type 'text/plain'
-    request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
+    begin
+      request.env['omniauth.auth'].to_hash.inspect
+    rescue
+      'No Data'
+    end
   end
 
   get '/auth/:provider/callback' do
     content_type 'text/plain'
-    request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
+    begin
+      request.env['omniauth.auth'].to_hash.inspect
+    rescue
+      'No Data'
+    end
   end
 
   get '/auth/failure' do
     content_type 'text/plain'
-    request.env['omniauth.auth'].to_hash.inspect rescue "No Data"
+    begin
+      request.env['omniauth.auth'].to_hash.inspect
+    rescue
+      'No Data'
+    end
   end
 end
 
-use Rack::Session::Cookie, :secret => ENV['RACK_COOKIE_SECRET']
+use Rack::Session::Cookie, secret: ENV['RACK_COOKIE_SECRET']
 
 use OmniAuth::Builder do
   # For additional provider examples please look at 'omni_auth.rb'
   # The key provider_ignores_state is only for AJAX flows. It is not recommended for normal logins.
-  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], {access_type: "offline", prompt: "consent", provider_ignores_state: true, scope: 'email,profile,calendar'}
+  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], access_type: 'offline', prompt: 'consent', provider_ignores_state: true, scope: 'email,profile,calendar'
 end
 
 run App.new

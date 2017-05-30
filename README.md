@@ -16,7 +16,7 @@ For more details, read the Google docs: https://developers.google.com/accounts/d
 Add to your `Gemfile`:
 
 ```ruby
-gem "omniauth-google-oauth2"
+gem 'omniauth-google-oauth2'
 ```
 
 Then `bundle install`.
@@ -36,7 +36,7 @@ Here's an example for adding the middleware to a Rails app in `config/initialize
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"]
+  provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET']
 end
 ```
 
@@ -91,66 +91,69 @@ Here's an example of a possible configuration where the strategy name is changed
 
 ```ruby
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"],
+  provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'],
     {
-      :name => "google",
-      :scope => "email, profile, plus.me, http://gdata.youtube.com",
-      :prompt => "select_account",
-      :image_aspect_ratio => "square",
-      :image_size => 50
+      name: 'google',
+      scope: 'email, profile, plus.me, http://gdata.youtube.com',
+      prompt: 'select_account',
+      image_aspect_ratio: 'square',
+      image_size: 50
     }
 end
 ```
 
 ## Auth Hash
 
-Here's an example of an authentication hash available in the callback by accessing `request.env["omniauth.auth"]`:
+Here's an example of an authentication hash available in the callback by accessing `request.env['omniauth.auth']`:
 
 ```ruby
 {
-    :provider => "google_oauth2",
-    :uid => "123456789",
-    :info => {
-        :name => "John Doe",
-        :email => "john@company_name.com",
-        :first_name => "John",
-        :last_name => "Doe",
-        :image => "https://lh3.googleusercontent.com/url/photo.jpg"
-    },
-    :credentials => {
-        :token => "token",
-        :refresh_token => "another_token",
-        :expires_at => 1354920555,
-        :expires => true
-    },
-    :extra => {
-        :raw_info => {
-            :sub => "123456789",
-            :email => "user@domain.example.com",
-            :email_verified => true,
-            :name => "John Doe",
-            :given_name => "John",
-            :family_name => "Doe",
-            :profile => "https://plus.google.com/123456789",
-            :picture => "https://lh3.googleusercontent.com/url/photo.jpg",
-            :gender => "male",
-            :birthday => "0000-06-25",
-            :locale => "en",
-            :hd => "company_name.com"
-        },
-        :id_info => {
-            "iss" => "accounts.google.com",
-            "at_hash" => "HK6E_P6Dh8Y93mRNtsDB1Q",
-            "email_verified" => "true",
-            "sub" => "10769150350006150715113082367",
-            "azp" => "APP_ID",
-            "email" => "jsmith@example.com",
-            "aud" => "APP_ID",
-            "iat" => 1353601026,
-            "exp" => 1353604926,
-            "openid_id" => "https://www.google.com/accounts/o8/id?id=ABCdfdswawerSDFDsfdsfdfjdsf"
-        }
+  "provider" => "google_oauth2",
+  "uid" => "100000000000000000000",
+  "info" => {
+    "name" => "John Smith",
+    "email" => "john@example.com",
+    "first_name" => "John",
+    "last_name" => "Smith",
+    "image" => "https://lh4.googleusercontent.com/photo.jpg",
+    "urls" => {
+      "google" => "https://plus.google.com/+JohnSmith"
     }
+  },
+  "credentials" => {
+    "token" => "TOKEN",
+    "refresh_token" => "REFRESH_TOKEN",
+    "expires_at" => 1496120719,
+    "expires" => true
+  },
+  "extra" => {
+    "id_token" => "ID_TOKEN",
+    "id_info" => {
+      "azp" => "APP_ID",
+      "aud" => "APP_ID",
+      "sub" => "100000000000000000000",
+      "email" => "john@example.com",
+      "email_verified" => true,
+      "at_hash" => "HK6E_P6Dh8Y93mRNtsDB1Q",
+      "iss" => "accounts.google.com",
+      "iat" => 1496117119,
+      "exp" => 1496120719
+    },
+    "raw_info" => {
+      "kind" => "plus#personOpenIdConnect",
+      "gender" => "male",
+      "sub" => "100000000000000000000",
+      "name" => "John Smith",
+      "given_name" => "John",
+      "family_name" => "Smith",
+      "profile" => "https://plus.google.com/+JohnSmith",
+      "picture" => "https://lh4.googleusercontent.com/photo.jpg?sz=50",
+      "email" => "john@example.com",
+      "email_verified" => "true",
+      "locale" => "en",
+      "hd" => "company.com"
+    }
+  }
 }
 ```
 
@@ -161,19 +164,19 @@ First define your application id and secret in `config/initializers/devise.rb`. 
 Configuration options can be passed as the last parameter here as key/value pairs.
 
 ```ruby
-config.omniauth :google_oauth2, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", { }
+config.omniauth :google_oauth2, 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', {}
 ```
 
 Then add the following to 'config/routes.rb' so the callback routes are defined.
 
 ```ruby
-devise_for :users, :controllers => { :omniauth_callbacks => "users/omniauth_callbacks" }
+devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
 ```
 
 Make sure your model is omniauthable. Generally this is "/app/models/user.rb"
 
 ```ruby
-devise :omniauthable, :omniauth_providers => [:google_oauth2]
+devise :omniauthable, omniauth_providers: [:google_oauth2]
 ```
 
 Then make sure your callbacks controller is setup.
@@ -182,13 +185,13 @@ Then make sure your callbacks controller is setup.
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def google_oauth2
       # You need to implement the method below in your model (e.g. app/models/user.rb)
-      @user = User.from_omniauth(request.env["omniauth.auth"])
+      @user = User.from_omniauth(request.env['omniauth.auth'])
 
       if @user.persisted?
-        flash[:notice] = I18n.t "devise.omniauth_callbacks.success", :kind => "Google"
-        sign_in_and_redirect @user, :event => :authentication
+        flash[:notice] = I18n.t 'devise.omniauth_callbacks.success', kind: 'Google'
+        sign_in_and_redirect @user, event: :authentication
       else
-        session["devise.google_data"] = request.env["omniauth.auth"].except(:extra) #Removing extra as it can overflow some session stores
+        session['devise.google_data'] = request.env['omniauth.auth'].except(:extra) #Removing extra as it can overflow some session stores
         redirect_to new_user_registration_url, alert: @user.errors.full_messages.join("\n")
       end
   end
@@ -200,12 +203,12 @@ and bind to or create the user
 ```ruby
 def self.from_omniauth(access_token)
     data = access_token.info
-    user = User.where(:email => data["email"]).first
+    user = User.where(email: data['email']).first
 
     # Uncomment the section below if you want users to be created if they don't exist
     # unless user
-    #     user = User.create(name: data["name"],
-    #        email: data["email"],
+    #     user = User.create(name: data['name'],
+    #        email: data['email'],
     #        password: Devise.friendly_token[0,20]
     #     )
     # end
@@ -269,8 +272,7 @@ window.gpAsyncInit = function() {
     }, function(response) {
       if (response && !response.error) {
         // google authentication succeed, now post data to server.
-        jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", 
-data: response,
+        jQuery.ajax({type: 'POST', url: '/auth/google_oauth2/callback', data: response,
           success: function(data) {
             // response from server
           }
@@ -305,7 +307,7 @@ OmniAuth.config.full_host = Rails.env.production? ? 'https://domain.com' : 'http
 
 ## License
 
-Copyright (c) 2016 by Josh Ellithorpe
+Copyright (c) 2017 by Josh Ellithorpe
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
