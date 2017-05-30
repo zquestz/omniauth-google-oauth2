@@ -1,12 +1,7 @@
-before_install:
-  - gem update --system 2.1.11
 language: ruby
 rvm:
-  - "2.2.0"
-  - "2.3.0"
-  - "rbx"
-  - "jruby"
-matrix:
-  allow_failures:
-    - rvm: "rbx"
-    - rvm: "jruby"
+  - '2.0.0'
+  - '2.1.10'
+  - '2.2.7'
+  - '2.3.4'
+  - '2.4.1'
