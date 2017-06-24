@@ -22,9 +22,8 @@ module OmniAuth
       option :authorized_client_ids, []
 
       option :client_options,
-             site: 'https://accounts.google.com',
-             authorize_url: '/o/oauth2/auth',
-             token_url: '/o/oauth2/token'
+             authorize_url: 'https://accounts.google.com/o/oauth2/v2/auth',
+             token_url: 'https://www.googleapis.com/oauth2/v4/token'
 
       def authorize_params
         super.tap do |params|
