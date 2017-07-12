@@ -18,7 +18,7 @@ module OmniAuth
       option :skip_image_info, true
       option :skip_jwt, false
       option :jwt_leeway, 60
-      option :authorize_options, %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes openid_realm]
+      option :authorize_options, %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes openid_realm device_id device_name]
       option :authorized_client_ids, []
 
       option :client_options,

@@ -78,7 +78,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe '#authorize_options' do
-    %i[access_type hd login_hint prompt scope state].each do |k|
+    %i[access_type hd login_hint prompt scope state device_id device_name].each do |k|
       it "should support #{k}" do
         @options = { k => 'http://someval' }
         expect(subject.authorize_params[k.to_s]).to eq('http://someval')
