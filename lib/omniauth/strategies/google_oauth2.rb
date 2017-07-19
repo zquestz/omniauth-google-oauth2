@@ -20,6 +20,7 @@ module OmniAuth
       option :jwt_leeway, 60
       option :authorize_options, %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes openid_realm device_id device_name]
       option :authorized_client_ids, []
+      option :verify_iss, true
 
       option :client_options,
              authorize_url: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -59,7 +60,7 @@ module OmniAuth
         hash[:id_token] = access_token['id_token']
         if !options[:skip_jwt] && !access_token['id_token'].nil?
           hash[:id_info] = JWT.decode(
-            access_token['id_token'], nil, false, verify_iss: true,
+            access_token['id_token'], nil, false, verify_iss: options.verify_iss,
                                                   iss: 'accounts.google.com',
                                                   verify_aud: true,
                                                   aud: options.client_id,
