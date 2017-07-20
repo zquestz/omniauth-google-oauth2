@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## 0.5.1 - 2017-07-19
 
 ### Added
-- JWT iss verification can be enabled/disabled with the `verify_iss` flag.
+- *Breaking* JWT iss verification can be enabled/disabled with the `verify_iss` flag - see the README for more details.
 - Authorize options now includes `device_id` and `device_name` for private ip ranges.
 
 ### Deprecated
