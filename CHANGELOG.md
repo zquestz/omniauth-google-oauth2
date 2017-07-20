@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.5.1 - 2017-07-19
+
+### Added
+- JWT iss verification can be enabled/disabled with the `verify_iss` flag.
+- Authorize options now includes `device_id` and `device_name` for private ip ranges.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Updated `authorize_url` and `token_url` to new endpoints.
+
 ## 0.5.0 - 2017-05-29
 
 ### Added
