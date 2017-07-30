@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.5.2 - 2017-07-30
+
+### Added
+- Nothing
+
+### Deprecated
+- Nothing.
+
+### Removed
+- New `authorize_url` and `token_url` endpoints are reverted until JWT 2.0 ships.
+
+### Fixed
+- Nothing
+
 ## 0.5.1 - 2017-07-19
 
 ### Added
