@@ -317,7 +317,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
             'nbf' => Time.now.to_i - 60,
             'iat' => Time.now.to_i,
             'aud' => 'appid',
-            'iss' => 'accounts.google.com'
+            'iss' => 'https://accounts.google.com'
           }
         id_token = JWT.encode(token_info, 'secret')
         let(:access_token) { OAuth2::AccessToken.from_hash(client, 'id_token' => id_token) }
