@@ -123,6 +123,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         @options = { hd: nil }
         expect(subject.authorize_params['hd']).to eq(nil)
       end
+
+      it 'should set the hd parameter to * if set (only allows G Suite emails)' do
+        @options = { hd: '*' }
+        expect(subject.authorize_params['hd']).to eq('*')
+      end
     end
 
     describe 'login_hint' do
