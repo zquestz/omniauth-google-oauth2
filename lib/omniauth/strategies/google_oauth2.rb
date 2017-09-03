@@ -206,7 +206,7 @@ module OmniAuth
         options.hd = options.hd.call if options.hd.is_a? Proc
         allowed_hosted_domains = Array(options.hd)
 
-        raise CallbackError.new(:invalid_hd, 'Invalid Hosted Domain') unless allowed_hosted_domains.include? @raw_info['hd']
+        raise CallbackError.new(:invalid_hd, 'Invalid Hosted Domain') unless allowed_hosted_domains.include?(@raw_info['hd']) || options.hd == '*'
         true
       end
     end
