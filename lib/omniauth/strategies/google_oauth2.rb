@@ -60,7 +60,7 @@ module OmniAuth
         hash = {}
         hash[:id_token] = access_token['id_token']
         if !options[:skip_jwt] && !access_token['id_token'].nil?
-          hash[:id_info] = JWT.decode(
+          hash[:id_info] = ::JWT.decode(
             access_token['id_token'], nil, false, verify_iss: options.verify_iss,
                                                   iss: 'accounts.google.com',
                                                   verify_aud: true,
