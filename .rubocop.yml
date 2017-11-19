@@ -14,7 +14,7 @@ Metrics/MethodLength:
   Enabled: false
 Metrics/PerceivedComplexity:
   Enabled: false
-Style/FileName:
+Naming:
   Enabled: false
 Style/MutableConstant:
   Enabled: false
