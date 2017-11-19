@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'json'
 require 'omniauth-google-oauth2'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
@@ -605,7 +606,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         builder.adapter :test do |stub|
           stub.get('/oauth2/v3/tokeninfo?access_token=invalid_iss_token') do
             [200, { 'Content-Type' => 'application/json; charset=UTF-8' },
-             MultiJson.encode(
+             JSON.dump(
                aud: '000000000000.apps.googleusercontent.com',
                sub: '123456789',
                email_verified: 'true',
@@ -635,7 +636,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         builder.request :url_encoded
         builder.adapter :test do |stub|
           stub.get('/oauth2/v3/tokeninfo?access_token=valid_access_token') do
-            [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, MultiJson.encode(
+            [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(
               aud: '000000000000.apps.googleusercontent.com',
               sub: '123456789',
               email_verified: 'true',
@@ -646,7 +647,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
             )]
           end
           stub.get('/oauth2/v3/tokeninfo?access_token=invalid_access_token') do
-            [400, { 'Content-Type' => 'application/json; charset=UTF-8' }, MultiJson.encode(error_description: 'Invalid Value')]
+            [400, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(error_description: 'Invalid Value')]
           end
         end
       end
@@ -679,7 +680,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         builder.request :url_encoded
         builder.adapter :test do |stub|
           stub.get('/plus/v1/people/me/openIdConnect') do
-            [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, MultiJson.encode(
+            [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(
               hd: 'example.com'
             )]
           end
@@ -694,7 +695,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
           builder.request :url_encoded
           builder.adapter :test do |stub|
             stub.get('/plus/v1/people/me/openIdConnect') do
-              [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, MultiJson.encode({})]
+              [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump({})]
             end
           end
         end
