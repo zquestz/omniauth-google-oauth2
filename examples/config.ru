@@ -85,7 +85,7 @@ class App < Sinatra::Base
     content_type 'text/plain'
     begin
       request.env['omniauth.auth'].to_hash.inspect
-    rescue
+    rescue StandardError
       'No Data'
     end
   end
@@ -94,7 +94,7 @@ class App < Sinatra::Base
     content_type 'text/plain'
     begin
       request.env['omniauth.auth'].to_hash.inspect
-    rescue
+    rescue StandardError
       'No Data'
     end
   end
@@ -103,7 +103,7 @@ class App < Sinatra::Base
     content_type 'text/plain'
     begin
       request.env['omniauth.auth'].to_hash.inspect
-    rescue
+    rescue StandardError
       'No Data'
     end
   end
