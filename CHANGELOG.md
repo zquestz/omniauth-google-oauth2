@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Removed the `multijson` dependency.
-- Support for versions of omniauth-oauth2 < 1.5.
+- Support for versions of `omniauth-oauth2` < 1.5.
 
 ### Fixed
 - Nothing.
