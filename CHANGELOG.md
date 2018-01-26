@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.5.3 - 2018-01-25
+
+### Added
+- Added support for the JWT 2.x gem.
+- Now fully qualifies the `JWT` class to prevent conflicts with the `Omniauth::JWT` strategy.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Removed the `multijson` dependency.
+- Support for versions of omniauth-oauth2 < 1.5.
+
+### Fixed
+- Nothing.
+
 ## 0.5.2 - 2017-07-30
 
 ### Added
