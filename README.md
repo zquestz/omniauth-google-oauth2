@@ -302,7 +302,7 @@ If you're making POST requests to `/auth/google_oauth2/callback` from another do
 Just set the `full_host` in OmniAuth based on the Rails.env.
 
 ```
-# config/initialisers/omniauth.rb
+# config/initializers/omniauth.rb
 OmniAuth.config.full_host = Rails.env.production? ? 'https://domain.com' : 'http://localhost:3000'
 ```
 
