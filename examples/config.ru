@@ -20,64 +20,64 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 # Main example app for omniauth-google-oauth2
 class App < Sinatra::Base
   get '/' do
-    <<-HTML
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Google OAuth2 Example</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script>
-      jQuery(function() {
-        return $.ajax({
-          url: 'https://apis.google.com/js/client:plus.js?onload=gpAsyncInit',
-          dataType: 'script',
-          cache: true
-        });
-      });
+    <<~HTML
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Google OAuth2 Example</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script>
+          jQuery(function() {
+            return $.ajax({
+              url: 'https://apis.google.com/js/client:plus.js?onload=gpAsyncInit',
+              dataType: 'script',
+              cache: true
+            });
+          });
 
-      window.gpAsyncInit = function() {
-        gapi.auth.authorize({
-          immediate: true,
-          response_type: 'code',
-          cookie_policy: 'single_host_origin',
-          client_id: '#{ENV['GOOGLE_KEY']}',
-          scope: 'email profile'
-        }, function(response) {
-          return;
-        });
-        $('.googleplus-login').click(function(e) {
-          e.preventDefault();
-          gapi.auth.authorize({
-            immediate: false,
-            response_type: 'code',
-            cookie_policy: 'single_host_origin',
-            client_id: '#{ENV['GOOGLE_KEY']}',
-            scope: 'email profile'
-          }, function(response) {
-            if (response && !response.error) {
-              // google authentication succeed, now post data to server.
-              jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", data: response,
-                success: function(data) {
-                  // Log the data returning from google.
-                  console.log(data)
+          window.gpAsyncInit = function() {
+            gapi.auth.authorize({
+              immediate: true,
+              response_type: 'code',
+              cookie_policy: 'single_host_origin',
+              client_id: '#{ENV['GOOGLE_KEY']}',
+              scope: 'email profile'
+            }, function(response) {
+              return;
+            });
+            $('.googleplus-login').click(function(e) {
+              e.preventDefault();
+              gapi.auth.authorize({
+                immediate: false,
+                response_type: 'code',
+                cookie_policy: 'single_host_origin',
+                client_id: '#{ENV['GOOGLE_KEY']}',
+                scope: 'email profile'
+              }, function(response) {
+                if (response && !response.error) {
+                  // google authentication succeed, now post data to server.
+                  jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", data: response,
+                    success: function(data) {
+                      // Log the data returning from google.
+                      console.log(data)
+                    }
+                  });
+                } else {
+                  // google authentication failed.
+                  console.log("FAILED")
                 }
               });
-            } else {
-              // google authentication failed.
-              console.log("FAILED")
-            }
-          });
-        });
-      };
-    </script>
-  </head>
-  <body>
-  <ul>
-    <li><a href='/auth/google_oauth2'>Sign in with Google</a></li>
-    <li><a href='#' class="googleplus-login">Sign in with Google via AJAX</a></li>
-  </ul>
-  </body>
-</html>
+            });
+          };
+        </script>
+      </head>
+      <body>
+      <ul>
+        <li><a href='/auth/google_oauth2'>Sign in with Google</a></li>
+        <li><a href='#' class="googleplus-login">Sign in with Google via AJAX</a></li>
+      </ul>
+      </body>
+    </html>
     HTML
   end
 
