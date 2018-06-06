@@ -20,7 +20,7 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 # Main example app for omniauth-google-oauth2
 class App < Sinatra::Base
   get '/' do
-    <<~HTML
+    <<-HTML
     <!DOCTYPE html>
     <html>
       <head>
