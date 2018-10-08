@@ -193,6 +193,7 @@ module OmniAuth
 
       def verify_token(access_token)
         return false unless access_token
+
         raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo',
                                       params: { access_token: access_token }).parsed
         raw_response['aud'] == options.client_id || options.authorized_client_ids.include?(raw_response['aud'])
@@ -200,12 +201,14 @@ module OmniAuth
 
       def verify_hd(access_token)
         return true unless options.hd
+
         @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
 
         options.hd = options.hd.call if options.hd.is_a? Proc
         allowed_hosted_domains = Array(options.hd)
 
         raise CallbackError.new(:invalid_hd, 'Invalid Hosted Domain') unless allowed_hosted_domains.include?(@raw_info['hd']) || options.hd == '*'
+
         true
       end
     end

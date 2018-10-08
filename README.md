@@ -167,6 +167,7 @@ Configuration options can be passed as the last parameter here as key/value pair
 ```ruby
 config.omniauth :google_oauth2, 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', {}
 ```
+NOTE: If you are using this gem with devise with above snippet in `config/initializers/devise.rb` then do not create `config/initializers/omniauth.rb` which will conflict with devise configurations.
 
 Then add the following to 'config/routes.rb' so the callback routes are defined.
 
