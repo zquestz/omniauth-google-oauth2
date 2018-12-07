@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.5.4 - 2018-12-07
+
+### Added
+- New recommended endpoints for Google OAuth.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
 ## 0.5.3 - 2018-01-25
 
 ### Added
@@ -20,7 +34,7 @@ All notable changes to this project will be documented in this file.
 ## 0.5.2 - 2017-07-30
 
 ### Added
-- Nothing
+- Nothing.
 
 ### Deprecated
 - Nothing.
@@ -29,7 +43,7 @@ All notable changes to this project will be documented in this file.
 - New `authorize_url` and `token_url` endpoints are reverted until JWT 2.0 ships.
 
 ### Fixed
-- Nothing
+- Nothing.
 
 ## 0.5.1 - 2017-07-19
 
