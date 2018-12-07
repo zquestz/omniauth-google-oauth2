@@ -22,9 +22,9 @@ module OmniAuth
       option :verify_iss, true
 
       option :client_options,
-             site: 'https://accounts.google.com',
-             authorize_url: '/o/oauth2/auth',
-             token_url: '/o/oauth2/token'
+             site: 'https://oauth2.googleapis.com',
+             authorize_url: 'https://accounts.google.com/o/oauth2/auth',
+             token_url: '/token'
 
       def authorize_params
         super.tap do |params|

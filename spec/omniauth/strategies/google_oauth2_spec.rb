@@ -30,15 +30,15 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
   describe '#client_options' do
     it 'has correct site' do
-      expect(subject.client.site).to eq('https://accounts.google.com')
+      expect(subject.client.site).to eq('https://oauth2.googleapis.com')
     end
 
     it 'has correct authorize_url' do
-      expect(subject.client.options[:authorize_url]).to eq('/o/oauth2/auth')
+      expect(subject.client.options[:authorize_url]).to eq('https://accounts.google.com/o/oauth2/auth')
     end
 
     it 'has correct token_url' do
-      expect(subject.client.options[:token_url]).to eq('/o/oauth2/token')
+      expect(subject.client.options[:token_url]).to eq('/token')
     end
 
     describe 'overrides' do
