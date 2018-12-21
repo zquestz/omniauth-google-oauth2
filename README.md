@@ -7,8 +7,6 @@ Strategy to authenticate with Google via OAuth2 in OmniAuth.
 
 Get your API key at: https://code.google.com/apis/console/  Note the Client ID and the Client Secret.
 
-**Note**: You must enable the "Contacts API" and "Google+ API" via the Google API console. Otherwise, you will receive an `OAuth2::Error`(`Error: "Invalid credentials"`) stating that access is not configured when you attempt to authenticate.
-
 For more details, read the Google docs: https://developers.google.com/accounts/docs/OAuth2
 
 ## Installation
@@ -25,8 +23,6 @@ Then `bundle install`.
 
 * Go to 'https://console.developers.google.com'
 * Select your project.
-* Click 'Enable and manage APIs'.
-* Make sure "Contacts API" and "Google+ API" are on.
 * Go to Credentials, then select the "OAuth consent screen" tab on top, and provide an 'EMAIL ADDRESS' and a 'PRODUCT NAME'
 * Wait 10 minutes for changes to take effect.
 
@@ -95,7 +91,7 @@ Here's an example of a possible configuration where the strategy name is changed
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'],
     {
-      scope: 'userinfo.email, userinfo.profile, plus.me, http://gdata.youtube.com',
+      scope: 'userinfo.email, userinfo.profile, http://gdata.youtube.com',
       prompt: 'select_account',
       image_aspect_ratio: 'square',
       image_size: 50
