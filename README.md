@@ -141,8 +141,6 @@ Here's an example of an authentication hash available in the callback by accessi
       "exp" => 1496120719
     },
     "raw_info" => {
-      "kind" => "plus#personOpenIdConnect",
-      "gender" => "male",
       "sub" => "100000000000000000000",
       "name" => "John Smith",
       "given_name" => "John",
