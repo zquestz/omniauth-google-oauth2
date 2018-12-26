@@ -624,37 +624,6 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
-  describe 'verify_iss option' do
-    before(:each) do
-      subject.options.client_options[:connection_build] = proc do |builder|
-        builder.request :url_encoded
-        builder.adapter :test do |stub|
-          stub.get('/oauth2/v3/tokeninfo?access_token=invalid_iss_token') do
-            [200, { 'Content-Type' => 'application/json; charset=UTF-8' },
-             JSON.dump(
-               aud: '000000000000.apps.googleusercontent.com',
-               sub: '123456789',
-               email_verified: 'true',
-               email: 'example@example.com',
-               access_type: 'offline',
-               scope: 'profile email',
-               expires_in: 436,
-               iss: 'foobar.com'
-             )]
-          end
-        end
-      end
-      subject.options.authorized_client_ids = ['000000000000.apps.googleusercontent.com']
-      subject.options.client_id = '000000000000.apps.googleusercontent.com'
-      subject.options[:verify_iss] = false
-    end
-
-    it 'should verify token if the iss does not match options.expected_iss' do
-      result = subject.send(:verify_token, 'invalid_iss_token')
-      expect(result).to eq(true)
-    end
-  end
-
   describe 'verify_token' do
     before(:each) do
       subject.options.client_options[:connection_build] = proc do |builder|

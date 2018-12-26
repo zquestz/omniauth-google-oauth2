@@ -20,7 +20,6 @@ module OmniAuth
       option :jwt_leeway, 60
       option :authorize_options, %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes openid_realm device_id device_name]
       option :authorized_client_ids, []
-      option :verify_iss, true
 
       option :client_options,
              site: 'https://oauth2.googleapis.com',
