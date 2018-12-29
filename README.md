@@ -83,8 +83,6 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `openid_realm`: Set the OpenID realm value, to allow upgrading from OpenID based authentication to OAuth 2 based authentication. When this is set correctly an `openid_id` value will be set in `[:extra][:id_info]` in the authentication hash with the value of the user's OpenID ID URL.
 
-* `verify_iss`: Allows you to disable iss validation when decoding the JWT. This was added since Google now returns either `accounts.google.com` or `https://accounts.google.com`, and there is no way to predict what they will return, causing JWT validation failures.
-
 Here's an example of a possible configuration where the strategy name is changed, the user is asked for extra permissions, the user is always prompted to select his account when logging in and the user's profile picture is returned as a thumbnail:
 
 ```ruby

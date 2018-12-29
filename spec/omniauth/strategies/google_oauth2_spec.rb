@@ -313,35 +313,60 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     before { allow(subject).to receive(:access_token).and_return(access_token) }
 
     describe 'id_token' do
-      context 'when the id_token is passed into the access token' do
-        token_info =
+      shared_examples 'id_token issued by valid issuer' do |issuer| # rubocop:disable Metrics/BlockLength
+        context 'when the id_token is passed into the access token' do
+          let(:token_info) do
+            {
+              'abc' => 'xyz',
+              'exp' => Time.now.to_i + 3600,
+              'nbf' => Time.now.to_i - 60,
+              'iat' => Time.now.to_i,
+              'aud' => 'appid',
+              'iss' => issuer
+            }
+          end
+          let(:id_token) { JWT.encode(token_info, 'secret') }
+          let(:access_token) { OAuth2::AccessToken.from_hash(client, 'id_token' => id_token) }
+
+          it 'should include id_token when set on the access_token' do
+            expect(subject.extra).to include(id_token: id_token)
+          end
+
+          it 'should include id_info when id_token is set on the access_token and skip_jwt is false' do
+            subject.options[:skip_jwt] = false
+            expect(subject.extra).to include(id_info: token_info)
+          end
+
+          it 'should not include id_info when id_token is set on the access_token and skip_jwt is true' do
+            subject.options[:skip_jwt] = true
+            expect(subject.extra).not_to have_key(:id_info)
+          end
+
+          it 'should include id_info when id_token is set on the access_token by default' do
+            expect(subject.extra).to include(id_info: token_info)
+          end
+        end
+      end
+
+      it_behaves_like 'id_token issued by valid issuer', 'accounts.google.com'
+      it_behaves_like 'id_token issued by valid issuer', 'https://accounts.google.com'
+
+      context 'when the id_token is issued by an invalid issuer' do
+        let(:token_info) do
           {
             'abc' => 'xyz',
             'exp' => Time.now.to_i + 3600,
             'nbf' => Time.now.to_i - 60,
             'iat' => Time.now.to_i,
             'aud' => 'appid',
-            'iss' => 'accounts.google.com'
+            'iss' => 'fake.google.com'
           }
-        id_token = JWT.encode(token_info, 'secret')
+        end
+        let(:id_token) { JWT.encode(token_info, 'secret') }
         let(:access_token) { OAuth2::AccessToken.from_hash(client, 'id_token' => id_token) }
 
-        it 'should include id_token when set on the access_token' do
-          expect(subject.extra).to include(id_token: id_token)
-        end
-
-        it 'should include id_info when id_token is set on the access_token and skip_jwt is false' do
-          subject.options[:skip_jwt] = false
-          expect(subject.extra).to include(id_info: token_info)
-        end
-
-        it 'should not include id_info when id_token is set on the access_token and skip_jwt is true' do
-          subject.options[:skip_jwt] = true
-          expect(subject.extra).not_to have_key(:id_info)
-        end
-
-        it 'should include id_info when id_token is set on the access_token by default' do
-          expect(subject.extra).to include(id_info: token_info)
+        it 'raises JWT::InvalidIssuerError' do
+          expect { subject.extra }.to raise_error(JWT::InvalidIssuerError)
         end
       end
 
@@ -534,37 +559,6 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(subject).to receive(:client).and_return(client)
       expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: 'redirect_uri_without_query_string' }, {})
       subject.build_access_token
-    end
-  end
-
-  describe 'verify_iss option' do
-    before(:each) do
-      subject.options.client_options[:connection_build] = proc do |builder|
-        builder.request :url_encoded
-        builder.adapter :test do |stub|
-          stub.get('/oauth2/v3/tokeninfo?access_token=invalid_iss_token') do
-            [200, { 'Content-Type' => 'application/json; charset=UTF-8' },
-             JSON.dump(
-               aud: '000000000000.apps.googleusercontent.com',
-               sub: '123456789',
-               email_verified: 'true',
-               email: 'example@example.com',
-               access_type: 'offline',
-               scope: 'profile email',
-               expires_in: 436,
-               iss: 'foobar.com'
-             )]
-          end
-        end
-      end
-      subject.options.authorized_client_ids = ['000000000000.apps.googleusercontent.com']
-      subject.options.client_id = '000000000000.apps.googleusercontent.com'
-      subject.options[:verify_iss] = false
-    end
-
-    it 'should verify token if the iss does not match options.expected_iss' do
-      result = subject.send(:verify_token, 'invalid_iss_token')
-      expect(result).to eq(true)
     end
   end
 
