@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.6.0 - 2018-12-28
+
+### Added
+- Support for JWT 2.x.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Support for JWT 1.x.
+- Support for `raw_friend_info` and `raw_image_info`.
+
+### Fixed
+- Nothing.
+
 ## 0.5.4 - 2018-12-07
 
 ### Added
