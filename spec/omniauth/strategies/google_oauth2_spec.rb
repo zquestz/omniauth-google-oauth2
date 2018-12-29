@@ -304,9 +304,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/plus/v1/people/me/openIdConnect') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
-          stub.get('/plus/v1/people/12345/people/visible') { [200, { 'content-type' => 'application/json' }, '[{"foo":"bar"}]'] }
-          stub.get('/plus/v1/people/12345?fields=image') { [200, { 'content-type' => 'application/json' }, '{"image":"imageData"}'] }
+          stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
         end
       end
     end
@@ -372,66 +370,6 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
         it 'should include raw_info' do
           expect(subject.extra[:raw_info]).to eq('sub' => '12345')
-        end
-      end
-    end
-
-    describe 'raw_friend_info' do
-      context 'when skip_info is true' do
-        before { subject.options[:skip_info] = true }
-
-        it 'should not include raw_friend_info' do
-          expect(subject.extra).not_to have_key(:raw_friend_info)
-        end
-      end
-
-      context 'when skip_info is false' do
-        before { subject.options[:skip_info] = false }
-
-        context 'when skip_friends is true' do
-          before { subject.options[:skip_friends] = true }
-
-          it 'should not include raw_friend_info' do
-            expect(subject.extra).not_to have_key(:raw_friend_info)
-          end
-        end
-
-        context 'when skip_friends is false' do
-          before { subject.options[:skip_friends] = false }
-
-          it 'should not include raw_friend_info' do
-            expect(subject.extra[:raw_friend_info]).to eq([{ 'foo' => 'bar' }])
-          end
-        end
-      end
-    end
-
-    describe 'raw_image_info' do
-      context 'when skip_info is true' do
-        before { subject.options[:skip_info] = true }
-
-        it 'should not include raw_image_info' do
-          expect(subject.extra).not_to have_key(:raw_image_info)
-        end
-      end
-
-      context 'when skip_info is false' do
-        before { subject.options[:skip_info] = false }
-
-        context 'when skip_image_info is true' do
-          before { subject.options[:skip_image_info] = true }
-
-          it 'should not include raw_image_info' do
-            expect(subject.extra).not_to have_key(:raw_image_info)
-          end
-        end
-
-        context 'when skip_image_info is false' do
-          before { subject.options[:skip_image_info] = false }
-
-          it 'should include raw_image_info' do
-            expect(subject.extra[:raw_image_info]).to eq('image' => 'imageData')
-          end
         end
       end
     end
@@ -679,7 +617,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/plus/v1/people/me/openIdConnect') do
+          stub.get('/oauth2/v3/userinfo') do
             [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(
               hd: 'example.com'
             )]
@@ -694,7 +632,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         OAuth2::Client.new('abc', 'def') do |builder|
           builder.request :url_encoded
           builder.adapter :test do |stub|
-            stub.get('/plus/v1/people/me/openIdConnect') do
+            stub.get('/oauth2/v3/userinfo') do
               [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump({})]
             end
           end

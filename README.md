@@ -7,8 +7,6 @@ Strategy to authenticate with Google via OAuth2 in OmniAuth.
 
 Get your API key at: https://code.google.com/apis/console/  Note the Client ID and the Client Secret.
 
-**Note**: You must enable the "Contacts API" and "Google+ API" via the Google API console. Otherwise, you will receive an `OAuth2::Error`(`Error: "Invalid credentials"`) stating that access is not configured when you attempt to authenticate.
-
 For more details, read the Google docs: https://developers.google.com/accounts/docs/OAuth2
 
 ## Installation
@@ -25,8 +23,6 @@ Then `bundle install`.
 
 * Go to 'https://console.developers.google.com'
 * Select your project.
-* Click 'Enable and manage APIs'.
-* Make sure "Contacts API" and "Google+ API" are on.
 * Go to Credentials, then select the "OAuth consent screen" tab on top, and provide an 'EMAIL ADDRESS' and a 'PRODUCT NAME'
 * Wait 10 minutes for changes to take effect.
 
@@ -95,7 +91,7 @@ Here's an example of a possible configuration where the strategy name is changed
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'],
     {
-      scope: 'userinfo.email, userinfo.profile, plus.me, http://gdata.youtube.com',
+      scope: 'userinfo.email, userinfo.profile, http://gdata.youtube.com',
       prompt: 'select_account',
       image_aspect_ratio: 'square',
       image_size: 50
@@ -141,8 +137,6 @@ Here's an example of an authentication hash available in the callback by accessi
       "exp" => 1496120719
     },
     "raw_info" => {
-      "kind" => "plus#personOpenIdConnect",
-      "gender" => "male",
       "sub" => "100000000000000000000",
       "name" => "John Smith",
       "given_name" => "John",
@@ -244,48 +238,38 @@ The omniauth-google-oauth2 gem supports this mode of operation out of the box.  
 
 ```javascript
 // Basic hybrid auth example following the pattern at:
-// https://developers.google.com/api-client-library/javascript/features/authentication#Authexample
-jQuery(function() {
-  return $.ajax({
-    url: 'https://apis.google.com/js/client:plus.js?onload=gpAsyncInit',
-    dataType: 'script',
-    cache: true
-  });
-});
+// https://developers.google.com/identity/sign-in/web/reference
 
-window.gpAsyncInit = function() {
-  gapi.auth.authorize({
-    immediate: true,
-    response_type: 'code',
-    cookie_policy: 'single_host_origin',
-    client_id: 'YOUR_CLIENT_ID',
-    scope: 'email profile'
-  }, function(response) {
-    return;
-  });
-  $('.googleplus-login').click(function(e) {
-    e.preventDefault();
-    gapi.auth.authorize({
-      immediate: false,
-      response_type: 'code',
-      cookie_policy: 'single_host_origin',
-      client_id: 'YOUR_CLIENT_ID',
-      scope: 'email profile'
-    }, function(response) {
-      if (response && !response.error) {
-        // google authentication succeed, now post data to server.
-        jQuery.ajax({type: 'POST', url: '/auth/google_oauth2/callback', data: response,
-          success: function(data) {
-            // response from server
-          }
-        });
-      } else {
-        // google authentication failed
-      }
+<script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>
+
+...
+
+function init() {
+  gapi.load('auth2', function() {
+    // Ready.
+    $('.google-login-button').click(function(e) {
+      e.preventDefault();
+      
+      gapi.auth2.authorize({
+        client_id: 'YOUR_CLIENT_ID',
+        cookie_policy: 'single_host_origin',
+        scope: 'email profile',
+        response_type: 'code'
+      }, function(response) {
+        if (response && !response.error) {
+          // google authentication succeed, now post data to server.
+          jQuery.ajax({type: 'POST', url: '/auth/google_oauth2/callback', data: response,
+            success: function(data) {
+              // response from server
+            }
+          });        
+        } else {
+          // google authentication failed
+        }
+      });
     });
   });
 };
-
 ```
 
 #### Note about mobile clients (iOS, Android)
