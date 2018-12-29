@@ -2,6 +2,6 @@
 
 source 'https://rubygems.org'
 
-gem 'omniauth-google-oauth2', '~> 0.5'
+gem 'omniauth-google-oauth2', '~> 0.6'
 gem 'rubocop'
 gem 'sinatra', '~> 1.4'
