@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Support for JWT 1.x.
 - Support for `raw_friend_info` and `raw_image_info`.
+- Stop using Google+ API endpoints.
 
 ### Fixed
 - Nothing.
