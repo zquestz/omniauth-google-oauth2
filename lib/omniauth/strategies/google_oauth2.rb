@@ -60,21 +60,33 @@ module OmniAuth
         hash = {}
         hash[:id_token] = access_token['id_token']
         if !options[:skip_jwt] && !access_token['id_token'].nil?
-          hash[:id_info] = ::JWT.decode(
-            access_token['id_token'], nil, false, verify_iss: options.verify_iss,
-                                                  iss: 'accounts.google.com',
-                                                  verify_aud: true,
-                                                  aud: options.client_id,
-                                                  verify_sub: false,
-                                                  verify_expiration: true,
-                                                  verify_not_before: true,
-                                                  verify_iat: true,
-                                                  verify_jti: false,
-                                                  leeway: options[:jwt_leeway]
-          ).first
+          # FDL: I added a check for both possible iss domains. This is fixed in version 0.6.0 of this gem. See
+          # google doc notes for more info on updating the gem.
+          hash[:id_info] = do_jwt_decode(options, access_token, 'https://accounts.google.com') ||
+              do_jwt_decode(options, access_token, 'accounts.google.com')
         end
         hash[:raw_info] = raw_info unless skip_info?
         prune! hash
+      end
+
+      def do_jwt_decode(options, access_token, iss)
+        begin
+          ::JWT.decode(
+              access_token['id_token'], nil, false, verify_iss: options.verify_iss,
+              iss: iss,
+              verify_aud: true,
+              aud: options.client_id,
+              verify_sub: false,
+              verify_expiration: true,
+              verify_not_before: true,
+              verify_iat: true,
+              verify_jti: false,
+              leeway: options[:jwt_leeway]
+          ).first
+        rescue Exception => ex
+          raise unless ex.message.starts_with? 'Invalid issuer.'
+          return false
+        end
       end
 
       def raw_info
