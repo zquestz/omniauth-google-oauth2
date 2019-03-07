@@ -177,8 +177,8 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     describe 'scope' do
       it 'should expand scope shortcuts' do
-        @options = { scope: 'plus.me' }
-        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/plus.me')
+        @options = { scope: 'calendar' }
+        expect(subject.authorize_params['scope']).to eq('https://www.googleapis.com/auth/calendar')
       end
 
       it 'should leave base scopes as is' do
