@@ -46,7 +46,8 @@ module OmniAuth
       info do
         prune!(
           name: raw_info['name'],
-          email: verified_email,
+          email: raw_info['email'],
+          email_verified: raw_info['email_verified'],
           first_name: raw_info['given_name'],
           last_name: raw_info['family_name'],
           image: image_url,
@@ -133,10 +134,6 @@ module OmniAuth
           prune!(v) if v.is_a?(Hash)
           v.nil? || (v.respond_to?(:empty?) && v.empty?)
         end
-      end
-
-      def verified_email
-        raw_info['email_verified'] ? raw_info['email'] : nil
       end
 
       def image_url

@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.6.1 - 2019-03-07
+
+### Added
+- Return `email` and `email_verified` keys in response.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
 ## 0.6.0 - 2018-12-28
 
 ### Added
