@@ -54,10 +54,10 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `prompt`: A space-delimited list of string values that determines whether the user is re-prompted for authentication and/or consent. Possible values are:
   * `none`: No authentication or consent pages will be displayed; it will return an error if the user is not already authenticated and has not pre-configured consent for the requested scopes. This can be used as a method to check for existing authentication and/or consent.
-  * `consent`: The user will always be prompted for consent, even if he has previously allowed access a given set of scopes.
+  * `consent`: The user will always be prompted for consent, even if they have previously allowed access a given set of scopes.
   * `select_account`: The user will always be prompted to select a user account. This allows a user who has multiple current account sessions to select one amongst them.
 
-  If no value is specified, the user only sees the authentication page if he is not logged in and only sees the consent page the first time he authorizes a given set of scopes.
+  If no value is specified, the user only sees the authentication page if they are not logged in and only sees the consent page the first time they authorize a given set of scopes.
 
 * `image_aspect_ratio`: The shape of the user's profile picture. Possible values are:
   * `original`: Picture maintains its original aspect ratio.
