@@ -3,6 +3,7 @@
 require 'spec_helper'
 require 'json'
 require 'omniauth-google-oauth2'
+require 'stringio'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
   let(:request) { double('Request', params: {}, cookies: {}, env: {}) }
@@ -547,9 +548,26 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(token.client).to eq(:client)
     end
 
+    it 'reads the code from a json request body' do
+      body = StringIO.new(%({"code":"json_access_token"}))
+      client = double(:client)
+      auth_code = double(:auth_code)
+
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:content_type).and_return('application/json')
+      allow(request).to receive(:body).and_return(body)
+      allow(client).to receive(:auth_code).and_return(auth_code)
+      expect(subject).to receive(:client).and_return(client)
+
+      expect(auth_code).to receive(:get_token).with('json_access_token', { redirect_uri: 'postmessage' }, {})
+
+      subject.build_access_token
+    end
+
     it 'should use callback_url without query_string if this is not an AJAX request' do
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return('code' => 'valid_code')
+      allow(request).to receive(:content_type).and_return('application/x-www-form-urlencoded')
 
       client = double(:client)
       auth_code = double(:auth_code)
