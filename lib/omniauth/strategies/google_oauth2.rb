@@ -122,7 +122,7 @@ module OmniAuth
               client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
             end
           rescue JSON::ParserError => e
-            $stderr.puts "[omniauth google-oauth2] JSON parse error=#{e}"
+            warn "[omniauth google-oauth2] JSON parse error=#{e}"
           end
         else
           verifier = request.params['code']
