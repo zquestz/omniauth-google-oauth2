@@ -112,6 +112,18 @@ module OmniAuth
           client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
         elsif verify_token(request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
+        elsif request.content_type =~ /json/i
+          begin
+            body = JSON.parse(request.body.read)
+            request.body.rewind # rewind request body for downstream middlewares
+            verifier = body && body['code']
+            if verifier
+              redirect_uri = 'postmessage'
+              client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
+            end
+          rescue JSON::ParserError => e
+            warn "[omniauth google-oauth2] JSON parse error=#{e}"
+          end
         else
           verifier = request.params['code']
           client.auth_code.get_token(verifier, get_token_options(callback_url), deep_symbolize(options.auth_token_params))
