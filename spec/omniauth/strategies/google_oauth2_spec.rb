@@ -300,6 +300,41 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe '#info' do
+    let(:client) do
+      OAuth2::Client.new('abc', 'def') do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, response_hash.to_json] }
+        end
+      end
+    end
+    let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
+    before { allow(subject).to receive(:access_token).and_return(access_token) }
+
+    context 'with verified email' do
+      let(:response_hash) do
+        { email: 'something@domain.invalid', email_verified: true }
+      end
+
+      it 'should return equal email and unverified_email' do
+        expect(subject.info[:email]).to eq('something@domain.invalid')
+        expect(subject.info[:unverified_email]).to eq('something@domain.invalid')
+      end
+    end
+
+    context 'with unverified email' do
+      let(:response_hash) do
+        { email: 'something@domain.invalid', email_verified: false }
+      end
+
+      it 'should return nil email, and correct unverified email' do
+        expect(subject.info[:email]).to eq(nil)
+        expect(subject.info[:unverified_email]).to eq('something@domain.invalid')
+      end
+    end
+  end
+
   describe '#extra' do
     let(:client) do
       OAuth2::Client.new('abc', 'def') do |builder|
