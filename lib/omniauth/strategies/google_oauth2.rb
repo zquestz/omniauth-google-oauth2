@@ -46,7 +46,8 @@ module OmniAuth
       info do
         prune!(
           name: raw_info['name'],
-          email: raw_info['email'],
+          email: verified_email,
+          unverified_email: raw_info['email'],
           email_verified: raw_info['email_verified'],
           first_name: raw_info['given_name'],
           last_name: raw_info['family_name'],
@@ -135,6 +136,10 @@ module OmniAuth
         scope_list = raw_scope.split(' ').map { |item| item.split(',') }.flatten
         scope_list.map! { |s| s =~ %r{^https?://} || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
         scope_list.join(' ')
+      end
+
+      def verified_email
+        raw_info['email_verified'] ? raw_info['email'] : nil
       end
 
       def get_token_options(redirect_uri)

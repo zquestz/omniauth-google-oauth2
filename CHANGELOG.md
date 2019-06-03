@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.7.0 - 2019-06-03
+
+### Added
+- Ensure `info[:email]` is always verified, and include `unverified_email`
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
 ## 0.6.1 - 2019-03-07
 
 ### Added
