@@ -94,6 +94,7 @@ module OmniAuth
         verify_hd(access_token)
         access_token
       end
+
       alias build_access_token custom_build_access_token
 
       private
@@ -122,9 +123,15 @@ module OmniAuth
       end
 
       def client_get_token(verifier, redirect_uri)
-        token_options = get_token_options(redirect_uri)
-        token_params = deep_symbolize(options.auth_token_params || {})
-        client.auth_code.get_token(verifier, token_options, token_params)
+        client.auth_code.get_token(verifier, get_token_options(redirect_uri), get_token_params)
+      end
+
+      def get_token_options(redirect_uri)
+        { redirect_uri: redirect_uri }.merge(token_params.to_hash(symbolize_keys: true))
+      end
+
+      def get_token_params
+        deep_symbolize(options.auth_token_params || {})
       end
 
       def get_scope(params)
