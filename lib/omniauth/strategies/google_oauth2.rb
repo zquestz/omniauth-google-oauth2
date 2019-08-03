@@ -105,12 +105,11 @@ module OmniAuth
 
       def get_access_token(request)
         verifier = request.params['code']
+        redirect_uri = request.params['redirect_uri']
         if verifier && request.xhr?
-          redirect_uri = request.params['redirect_uri'] || 'postmessage'
-          client_get_token(verifier, redirect_uri)
+          client_get_token(verifier, redirect_uri || 'postmessage')
         elsif verifier
-          redirect_uri = request.params['redirect_uri'] || callback_url
-          client_get_token(verifier, redirect_uri)
+          client_get_token(verifier, redirect_uri || callback_url)
         elsif verify_token(request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         elsif request.content_type =~ /json/i
