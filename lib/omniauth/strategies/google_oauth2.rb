@@ -126,10 +126,6 @@ module OmniAuth
         client.auth_code.get_token(verifier, get_token_options(redirect_uri), get_token_params)
       end
 
-      def get_token_options(redirect_uri = '')
-        { redirect_uri: redirect_uri }.merge(token_params.to_hash(symbolize_keys: true))
-      end
-
       def get_token_params
         deep_symbolize(options.auth_token_params || {})
       end
@@ -145,7 +141,7 @@ module OmniAuth
         raw_info['email_verified'] ? raw_info['email'] : nil
       end
 
-      def get_token_options(redirect_uri)
+      def get_token_options(redirect_uri = '')
         { redirect_uri: redirect_uri }.merge(token_params.to_hash(symbolize_keys: true))
       end
 
