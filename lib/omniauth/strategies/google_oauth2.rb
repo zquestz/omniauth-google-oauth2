@@ -103,14 +103,10 @@ module OmniAuth
       end
 
       def get_access_token(request)
-        if request.xhr? && request.params['code']
-          verifier = request.params['code']
-          redirect_uri = request.params['redirect_uri'] || 'postmessage'
-          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
-        elsif request.params['code'] && request.params['redirect_uri']
-          verifier = request.params['code']
-          redirect_uri = request.params['redirect_uri']
-          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
+        verifier = request.params['code']
+        if verifier
+          redirect_uri = request.params['redirect_uri'] || request.xhr? ? 'postmessage' : callback_url
+          client_get_token(verifier, redirect_uri)
         elsif verify_token(request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         elsif request.content_type =~ /json/i
@@ -118,17 +114,17 @@ module OmniAuth
             body = JSON.parse(request.body.read)
             request.body.rewind # rewind request body for downstream middlewares
             verifier = body && body['code']
-            if verifier
-              redirect_uri = 'postmessage'
-              client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
-            end
+            client_get_token(verifier, 'postmessage') if verifier
           rescue JSON::ParserError => e
             warn "[omniauth google-oauth2] JSON parse error=#{e}"
           end
-        else
-          verifier = request.params['code']
-          client.auth_code.get_token(verifier, get_token_options(callback_url), deep_symbolize(options.auth_token_params))
         end
+      end
+
+      def client_get_token(verifier, redirect_uri)
+        token_options = get_token_options(redirect_uri)
+        token_params = deep_symbolize(options.auth_token_params || {})
+        client.auth_code.get_token(verifier, token_options, token_params)
       end
 
       def get_scope(params)
