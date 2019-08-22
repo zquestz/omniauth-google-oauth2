@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## 0.8.0 - 2019-08-21
 
 ### Added
-- Updated omniauth-oauth2 to v1.6.0
+- Updated omniauth-oauth2 to v1.6.0 for security fixes.
 
 ### Deprecated
 - Nothing.
