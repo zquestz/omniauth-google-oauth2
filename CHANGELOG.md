@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.8.0 - 2019-08-21
+
+### Added
+- Updated omniauth-oauth2 to v1.6.0
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Ruby 2.1 support.
+
+### Fixed
+- Nothing.
+
 ## 0.7.0 - 2019-06-03
 
 ### Added
