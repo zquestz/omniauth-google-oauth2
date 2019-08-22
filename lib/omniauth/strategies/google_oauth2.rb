@@ -94,6 +94,7 @@ module OmniAuth
         verify_hd(access_token)
         access_token
       end
+
       alias build_access_token custom_build_access_token
 
       private
@@ -103,14 +104,12 @@ module OmniAuth
       end
 
       def get_access_token(request)
-        if request.xhr? && request.params['code']
-          verifier = request.params['code']
-          redirect_uri = request.params['redirect_uri'] || 'postmessage'
-          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
-        elsif request.params['code'] && request.params['redirect_uri']
-          verifier = request.params['code']
-          redirect_uri = request.params['redirect_uri']
-          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
+        verifier = request.params['code']
+        redirect_uri = request.params['redirect_uri']
+        if verifier && request.xhr?
+          client_get_token(verifier, redirect_uri || 'postmessage')
+        elsif verifier
+          client_get_token(verifier, redirect_uri || callback_url)
         elsif verify_token(request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         elsif request.content_type =~ /json/i
@@ -118,17 +117,19 @@ module OmniAuth
             body = JSON.parse(request.body.read)
             request.body.rewind # rewind request body for downstream middlewares
             verifier = body && body['code']
-            if verifier
-              redirect_uri = 'postmessage'
-              client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
-            end
+            client_get_token(verifier, 'postmessage') if verifier
           rescue JSON::ParserError => e
             warn "[omniauth google-oauth2] JSON parse error=#{e}"
           end
-        else
-          verifier = request.params['code']
-          client.auth_code.get_token(verifier, get_token_options(callback_url), deep_symbolize(options.auth_token_params))
         end
+      end
+
+      def client_get_token(verifier, redirect_uri)
+        client.auth_code.get_token(verifier, get_token_options(redirect_uri), get_token_params)
+      end
+
+      def get_token_params
+        deep_symbolize(options.auth_token_params || {})
       end
 
       def get_scope(params)
@@ -142,7 +143,7 @@ module OmniAuth
         raw_info['email_verified'] ? raw_info['email'] : nil
       end
 
-      def get_token_options(redirect_uri)
+      def get_token_options(redirect_uri = '')
         { redirect_uri: redirect_uri }.merge(token_params.to_hash(symbolize_keys: true))
       end
 
