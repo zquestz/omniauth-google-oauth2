@@ -73,7 +73,7 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `hd`: (Optional) Limit sign-in to a particular Google Apps hosted domain. This can be simply string `'domain.com'` or an array `%w(domain.com domain.co)`. More information at: https://developers.google.com/accounts/docs/OpenIDConnect#hd-param
 
-* `jwt_leeway`: Number of seconds passed to the JWT library as leeway. Defaults to 60 seconds.
+* `jwt_leeway`: Number of seconds passed to the JWT library as leeway. Defaults to 60 seconds. Note this only works if you use jwt 2.1, as the leeway option was removed in later versions.
 
 * `skip_jwt`: Skip JWT processing. This is for users who are seeing JWT decoding errors with the `iat` field. Always try adjusting the leeway before disabling JWT processing.
 
