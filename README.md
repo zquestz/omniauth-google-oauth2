@@ -176,6 +176,8 @@ devise :omniauthable, omniauth_providers: [:google_oauth2]
 Then make sure your callbacks controller is setup.
 
 ```ruby
+# app/controllers/users/omniauth_callbacks_controller.rb:
+
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def google_oauth2
       # You need to implement the method below in your model (e.g. app/models/user.rb)
