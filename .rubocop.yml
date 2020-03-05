@@ -1,6 +1,6 @@
-ClassLength:
+Metrics/ClassLength:
   Enabled: false
-Layout/IndentHeredoc:
+Layout/HeredocIndentation:
   Enabled: false
 Metrics/AbcSize:
   Enabled: false
@@ -8,7 +8,7 @@ Metrics/BlockLength:
   ExcludedMethods: ['describe', 'context']
 Metrics/CyclomaticComplexity:
   Enabled: false
-Metrics/LineLength:
+Layout/LineLength:
   Enabled: false
 Metrics/MethodLength:
   Enabled: false
@@ -20,4 +20,9 @@ Style/MutableConstant:
   Enabled: false
 Gemspec/RequiredRubyVersion:
   Enabled: false
-
+Style/HashEachMethods:
+  Enabled: true
+Style/HashTransformKeys:
+  Enabled: true
+Style/HashTransformValues:
+  Enabled: true
