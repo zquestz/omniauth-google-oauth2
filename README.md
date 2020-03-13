@@ -83,6 +83,8 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `openid_realm`: Set the OpenID realm value, to allow upgrading from OpenID based authentication to OAuth 2 based authentication. When this is set correctly an `openid_id` value will be set in `[:extra][:id_info]` in the authentication hash with the value of the user's OpenID ID URL.
 
+* `provider_ignores_state`: You will need to set this to `true` when using the `One-time Code Flow` below. In this flow there is no server side redirect that would set the state.
+
 Here's an example of a possible configuration where the strategy name is changed, the user is asked for extra permissions, the user is always prompted to select their account when logging in and the user's profile picture is returned as a thumbnail:
 
 ```ruby
@@ -234,7 +236,7 @@ Google describes the One-time Code Flow [here](https://developers.google.com/+/w
 
 This flow is immune to replay attacks, and conveys no useful information to a man in the middle.
 
-The omniauth-google-oauth2 gem supports this mode of operation out of the box.  Implementors simply need to add the appropriate JavaScript to their web page, and they can take advantage of this flow.  An example JavaScript snippet follows.
+The omniauth-google-oauth2 gem supports this mode of operation when `provider_ignores_state` is set to `true`.  Implementors simply need to add the appropriate JavaScript to their web page, and they can take advantage of this flow.  An example JavaScript snippet follows.
 
 ```javascript
 // Basic hybrid auth example following the pattern at:
