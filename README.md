@@ -227,7 +227,7 @@ An overview is available at https://github.com/plataformatec/devise/wiki/OmniAut
 
 ### One-time Code Flow (Hybrid Authentication)
 
-Google describes the One-time Code Flow [here](https://developers.google.com/+/web/signin/server-side-flow).  This hybrid authentication flow has significant functional and security advantages over a pure server-side or pure client-side flow.  The following steps occur in this flow:
+Google describes the One-time Code Flow [here](https://developers.google.com/identity/sign-in/web/server-side-flow).  This hybrid authentication flow has significant functional and security advantages over a pure server-side or pure client-side flow.  The following steps occur in this flow:
 
 1. The client (web browser) authenticates the user directly via Google's JS API.  During this process assorted modals may be rendered by Google.
 2. On successful authentication, Google returns a one-time use code, which requires the Google client secret (which is only available server-side).
