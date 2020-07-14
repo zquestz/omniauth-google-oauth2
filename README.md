@@ -81,7 +81,7 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `include_granted_scopes`: If this is provided with the value true, and the authorization request is granted, the authorization will include any previous authorizations granted to this user/application combination for other scopes. See Google's [Incremental Authorization](https://developers.google.com/accounts/docs/OAuth2WebServer#incrementalAuth) for additional details.
 
-* `openid_realm`: Set the OpenID realm value, to allow upgrading from OpenID based authentication to OAuth 2 based authentication. When this is set correctly an `openid_id` value will be set in `[:extra][:id_info]` in the authentication hash with the value of the user's OpenID ID URL.
+* `openid_realm`: Set the OpenID realm value, to allow upgrading from OpenID based authentication to OAuth 2 based authentication. When this is set correctly an `openid_id` value will be set in `['extra']['id_info']` in the authentication hash with the value of the user's OpenID ID URL.
 
 * `provider_ignores_state`: You will need to set this to `true` when using the `One-time Code Flow` below. In this flow there is no server side redirect that would set the state.
 
@@ -189,7 +189,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
         flash[:notice] = I18n.t 'devise.omniauth_callbacks.success', kind: 'Google'
         sign_in_and_redirect @user, event: :authentication
       else
-        session['devise.google_data'] = request.env['omniauth.auth'].except(:extra) # Removing extra as it can overflow some session stores
+        session['devise.google_data'] = request.env['omniauth.auth'].except('extra') # Removing extra as it can overflow some session stores
         redirect_to new_user_registration_url, alert: @user.errors.full_messages.join("\n")
       end
   end
