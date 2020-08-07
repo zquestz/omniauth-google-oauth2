@@ -284,6 +284,31 @@ In that case, ensure to send an additional parameter `redirect_uri=` (empty stri
 
 If you're making POST requests to `/auth/google_oauth2/callback` from another domain, then you need to make sure `'X-Requested-With': 'XMLHttpRequest'` header is included with your request, otherwise your server might respond with `OAuth2::Error, : Invalid Value` error.
 
+#### Getting around the `redirect_uri_mismatch` error (See [Issue #365](https://github.com/zquestz/omniauth-google-oauth2/issues/365))
+
+If you are struggling with a persistent `redirect_uri_mismatch`, you can instead pass the `access_token` from [`getAuthResponse`](https://developers.google.com/identity/sign-in/web/reference#googleusergetauthresponseincludeauthorizationdata) directly to the `auth/google_oauth2/callback` endpoint, like so:
+
+```javascript
+// Initialize the GoogleAuth object
+let googleAuth;
+gapi.load('client:auth2', async () => {
+  await gapi.client.init({ scope: '...', client_id: '...' });
+  googleAuth = gapi.auth2.getAuthInstance();
+});
+
+// Call this when the Google Sign In button is clicked
+async function signInGoogle() {
+  const googleUser = await googleAuth.signIn(); // wait for the user to authorize through the modal
+  const { access_token } = googleUser.getAuthResponse();
+
+  const data = new FormData();
+  data.append('access_token', access_token);
+
+  const response = await api.post('/auth/google_oauth2/callback', data)
+  console.log(response);
+}
+```
+
 ## Fixing Protocol Mismatch for `redirect_uri` in Rails
 
 Just set the `full_host` in OmniAuth based on the Rails.env.
