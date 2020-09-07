@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'jwt'
+require 'oauth2'
 require 'omniauth/strategies/oauth2'
 require 'uri'
 
