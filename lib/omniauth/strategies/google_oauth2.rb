@@ -75,7 +75,7 @@ module OmniAuth
                                       verify_sub: false,
                                       verify_expiration: true,
                                       verify_not_before: true,
-                                      verify_iat: true,
+                                      verify_iat: false,
                                       verify_jti: false,
                                       leeway: options[:jwt_leeway])
 
