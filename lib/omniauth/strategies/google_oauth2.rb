@@ -107,20 +107,22 @@ module OmniAuth
       def get_access_token(request)
         verifier = request.params['code']
         redirect_uri = request.params['redirect_uri']
+        access_token = request.params['access_token']
         if verifier && request.xhr?
           client_get_token(verifier, redirect_uri || 'postmessage')
         elsif verifier
           client_get_token(verifier, redirect_uri || callback_url)
-        elsif verify_token(request.params['access_token'])
+        elsif access_token && verify_token(access_token)
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
         elsif request.content_type =~ /json/i
           begin
             body = JSON.parse(request.body.read)
             request.body.rewind # rewind request body for downstream middlewares
             verifier = body && body['code']
+            access_token = body && body['access_token']
             if verifier
               client_get_token(verifier, 'postmessage')
-            elsif body && verify_token(body['access_token'])
+            elsif verify_token(access_token)
               ::OAuth2::AccessToken.from_hash(client, body.dup)
             end
           rescue JSON::ParserError => e

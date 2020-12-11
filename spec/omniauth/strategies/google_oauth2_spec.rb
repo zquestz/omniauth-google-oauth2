@@ -605,9 +605,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:content_type).and_return('application/json')
       allow(request).to receive(:body).and_return(body)
+      expect(subject).to receive(:client).and_return(:client)
 
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
-      expect(subject).to receive(:client).and_return(client)
 
       token = subject.build_access_token
       expect(token).to be_instance_of(::OAuth2::AccessToken)
