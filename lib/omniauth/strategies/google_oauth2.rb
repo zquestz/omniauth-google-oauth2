@@ -118,7 +118,11 @@ module OmniAuth
             body = JSON.parse(request.body.read)
             request.body.rewind # rewind request body for downstream middlewares
             verifier = body && body['code']
-            client_get_token(verifier, 'postmessage') if verifier
+            if verifier
+              client_get_token(verifier, 'postmessage')
+            elsif body && verify_token(body['access_token'])
+              ::OAuth2::AccessToken.from_hash(client, body.dup)
+            end
           rescue JSON::ParserError => e
             warn "[omniauth google-oauth2] JSON parse error=#{e}"
           end
