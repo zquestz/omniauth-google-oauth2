@@ -14,6 +14,7 @@ module OmniAuth
       BASE_SCOPES = %w[profile email openid].freeze
       DEFAULT_SCOPE = 'email,profile'
       USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
+      IMAGE_SIZE_REGEXP = /(s\d+(-c)?)|(w\d+-h\d+(-c)?)|(w\d+(-c)?)|(h\d+(-c)?)|c/
 
       option :name, 'google_oauth2'
       option :skip_friends, true
@@ -171,6 +172,10 @@ module OmniAuth
         if path_index && image_size_opts_passed?
           u.path.insert(path_index, image_params)
           u.path = u.path.gsub('//', '/')
+
+          # Check if the image is already sized!
+          split_path = u.path.split('/')
+          u.path = u.path.sub("/#{split_path[-3]}", '') if split_path[-3] =~ IMAGE_SIZE_REGEXP
         end
 
         u.query = strip_unnecessary_query_parameters(u.query)

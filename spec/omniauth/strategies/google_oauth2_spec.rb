@@ -349,7 +349,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     before { allow(subject).to receive(:access_token).and_return(access_token) }
 
     describe 'id_token' do
-      shared_examples 'id_token issued by valid issuer' do |issuer| # rubocop:disable Metrics/BlockLength
+      shared_examples 'id_token issued by valid issuer' do |issuer|
         context 'when the id_token is passed into the access token' do
           let(:token_info) do
             {
@@ -462,6 +462,12 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
       end
 
+      it 'should return the image with size specified in the `image_size` option when sizing is in the picture' do
+        @options = { image_size: 50 }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh4.googleusercontent.com/url/s96-c/photo.jpg' } }
+        expect(subject.info[:image]).to eq('https://lh4.googleusercontent.com/url/s50/photo.jpg')
+      end
+
       it 'should handle a picture with too many slashes correctly' do
         @options = { image_size: 50 }
         allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url//photo.jpg' } }
@@ -492,9 +498,21 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40/photo.jpg')
       end
 
+      it 'should return the image with width and height specified in the `image_size` option when sizing is in the picture' do
+        @options = { image_size: { width: 50, height: 40 } }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/w100-h80-c/photo.jpg' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40/photo.jpg')
+      end
+
       it 'should return square image when `image_aspect_ratio` is specified' do
         @options = { image_aspect_ratio: 'square' }
         allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/c/photo.jpg')
+      end
+
+      it 'should return square image when `image_aspect_ratio` is specified and sizing is in the picture' do
+        @options = { image_aspect_ratio: 'square' }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/c/photo.jpg' } }
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/c/photo.jpg')
       end
 
@@ -504,9 +522,21 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50-c/photo.jpg')
       end
 
+      it 'should return square sized image when `image_aspect_ratio` and `image_size` is set and sizing is in the picture' do
+        @options = { image_aspect_ratio: 'square', image_size: 50 }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/s90/photo.jpg' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50-c/photo.jpg')
+      end
+
       it 'should return square sized image when `image_aspect_ratio` and `image_size` has height and width' do
         @options = { image_aspect_ratio: 'square', image_size: { width: 50, height: 40 } }
         allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40-c/photo.jpg')
+      end
+
+      it 'should return square sized image when `image_aspect_ratio` and `image_size` has height and width and sizing is in the picture' do
+        @options = { image_aspect_ratio: 'square', image_size: { width: 50, height: 40 } }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/w100-h80/photo.jpg' } }
         expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40-c/photo.jpg')
       end
 

@@ -3,7 +3,7 @@ Metrics/ClassLength:
 Metrics/AbcSize:
   Enabled: false
 Metrics/BlockLength:
-  ExcludedMethods: ['describe', 'context']
+  ExcludedMethods: ['describe', 'context', 'shared_examples']
 Metrics/CyclomaticComplexity:
   Enabled: false
 Metrics/LineLength:
