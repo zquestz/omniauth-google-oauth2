@@ -599,6 +599,22 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.build_access_token
     end
 
+    it 'reads the access token from a json request body' do
+      body = StringIO.new(%({"access_token":"valid_access_token"}))
+
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:content_type).and_return('application/json')
+      allow(request).to receive(:body).and_return(body)
+      expect(subject).to receive(:client).and_return(:client)
+
+      expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
+
+      token = subject.build_access_token
+      expect(token).to be_instance_of(::OAuth2::AccessToken)
+      expect(token.token).to eq('valid_access_token')
+      expect(token.client).to eq(:client)
+    end
+
     it 'should use callback_url without query_string if this is not an AJAX request' do
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return('code' => 'valid_code')

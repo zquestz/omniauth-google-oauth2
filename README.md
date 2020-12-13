@@ -251,7 +251,7 @@ function init() {
     // Ready.
     $('.google-login-button').click(function(e) {
       e.preventDefault();
-      
+
       gapi.auth2.authorize({
         client_id: 'YOUR_CLIENT_ID',
         cookie_policy: 'single_host_origin',
@@ -264,7 +264,7 @@ function init() {
             success: function(data) {
               // response from server
             }
-          });        
+          });
         } else {
           // google authentication failed
         }
@@ -307,6 +307,41 @@ async function signInGoogle() {
   const response = await api.post('/auth/google_oauth2/callback', data)
   console.log(response);
 }
+```
+
+#### Using Axios
+If you're making a GET resquests from another domain using `access_token`.
+```
+axios
+  .get(
+    'url(path to your callback}',
+    { params: { access_token: 'token' } },
+    headers....
+    )
+```
+
+If you're making a POST resquests from another domain using `access_token`.
+```
+axios
+  .post(
+    'url(path to your callback}',
+    { access_token: 'token' },
+    headers....
+    )
+
+--OR--
+
+axios
+  .post(
+    'url(path to your callback}',
+    null,
+      {
+        params: {
+          access_token: 'token'
+        },
+        headers....
+      }
+    )
 ```
 
 ## Fixing Protocol Mismatch for `redirect_uri` in Rails
