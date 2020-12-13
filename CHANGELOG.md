@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - A few minor issues with .rubocop.yml.
+- Issues with image resizing code when the image came with size information from Google.
 
 ## 0.8.0 - 2019-08-21
 
