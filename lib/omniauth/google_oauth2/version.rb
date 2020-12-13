@@ -2,6 +2,6 @@
 
 module OmniAuth
   module GoogleOauth2
-    VERSION = '0.8.0'
+    VERSION = '0.8.1'
   end
 end

@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.8.1 - 2020-12-12
+
+### Added
+- Support reading the access token from a json request body.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- No longer verify the iat claim for JWT.
+
+### Fixed
+- A few minor issues with .rubocop.yml.
+
 ## 0.8.0 - 2019-08-21
 
 ### Added
