@@ -299,7 +299,6 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     it 'should set the callback path with script_name if present' do
-      base_url = 'https://example.com'
       allow(subject).to receive(:full_host) { base_url }
       allow(subject).to receive(:script_name) { '/v1' }
       expect(subject.send(:callback_url)).to eq(base_url + '/v1/auth/google_oauth2/callback')
