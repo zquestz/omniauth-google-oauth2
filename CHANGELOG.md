@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Nothing.
 
 ### Removed
-- Support for Omniauth 1.x
+- Support for Omniauth 1.x.
 
 ### Fixed
 - Nothing.
