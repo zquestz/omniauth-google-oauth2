@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.0.0 - 2021-03-14
+
+### Added
+- Support for Omniauth 2.x!
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Support for Omniauth 1.x
+
+### Fixed
+- Nothing.
+
 ## 0.8.2 - 2021-03-14
 
 ### Added
@@ -10,10 +24,10 @@ All notable changes to this project will be documented in this file.
 - Nothing.
 
 ### Removed
-- Nothing
+- Nothing.
 
 ### Fixed
-- Nothing
+- Nothing.
 
 ## 0.8.1 - 2020-12-12
 
