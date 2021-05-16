@@ -34,6 +34,7 @@ Here's an example for adding the middleware to a Rails app in `config/initialize
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET']
 end
+OmniAuth.config.allowed_request_methods = %i[get]
 ```
 
 You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
