@@ -121,8 +121,9 @@ module OmniAuth
             request.body.rewind # rewind request body for downstream middlewares
             verifier = body && body['code']
             access_token = body && body['access_token']
+            redirect_uri ||= body && body['redirect_uri']
             if verifier
-              client_get_token(verifier, 'postmessage')
+              client_get_token(verifier, redirect_uri || 'postmessage')
             elsif verify_token(access_token)
               ::OAuth2::AccessToken.from_hash(client, body.dup)
             end
