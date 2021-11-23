@@ -641,6 +641,22 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.build_access_token
     end
 
+    it 'reads the redirect uri from a json request body' do
+      body = StringIO.new(%({"code":"json_access_token", "redirect_uri":"sample"}))
+      client = double(:client)
+      auth_code = double(:auth_code)
+
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:content_type).and_return('application/json')
+      allow(request).to receive(:body).and_return(body)
+      allow(client).to receive(:auth_code).and_return(auth_code)
+      expect(subject).to receive(:client).and_return(client)
+
+      expect(auth_code).to receive(:get_token).with('json_access_token', { redirect_uri: 'sample' }, {})
+
+      subject.build_access_token
+    end
+
     it 'reads the access token from a json request body' do
       body = StringIO.new(%({"access_token":"valid_access_token"}))
 
