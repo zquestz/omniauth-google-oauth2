@@ -350,13 +350,28 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   describe '#credentials' do
     let(:client) { OAuth2::Client.new('abc', 'def') }
     let(:access_token) { OAuth2::AccessToken.from_hash(client, access_token: 'valid_access_token', expires_at: 123_456_789, refresh_token: 'valid_refresh_token') }
-    before(:each) { allow(subject).to receive(:access_token).and_return(access_token) }
+    before(:each) do
+      allow(subject).to receive(:access_token).and_return(access_token)
+      subject.options.client_options[:connection_build] = proc do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v3/tokeninfo?access_token=valid_access_token') do
+            [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(
+              aud: '000000000000.apps.googleusercontent.com',
+              sub: '123456789',
+              scope: 'profile email'
+            )]
+          end
+        end
+      end
+    end
 
     it 'should return access token and (optionally) refresh token' do
       expect(subject.credentials.to_h).to \
         match(hash_including(
                 'token' => 'valid_access_token',
                 'refresh_token' => 'valid_refresh_token',
+                'scope' => 'profile email',
                 'expires_at' => 123_456_789,
                 'expires' => true
               ))
