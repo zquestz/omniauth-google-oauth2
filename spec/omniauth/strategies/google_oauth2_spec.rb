@@ -347,6 +347,22 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe '#credentials' do
+    let(:client) { OAuth2::Client.new('abc', 'def') }
+    let(:access_token) { OAuth2::AccessToken.from_hash(client, access_token: 'valid_access_token', expires_at: 123_456_789, refresh_token: 'valid_refresh_token') }
+    before(:each) { allow(subject).to receive(:access_token).and_return(access_token) }
+
+    it 'should return access token and (optionally) refresh token' do
+      expect(subject.credentials.to_h).to \
+        match(hash_including(
+                'token' => 'valid_access_token',
+                'refresh_token' => 'valid_refresh_token',
+                'expires_at' => 123_456_789,
+                'expires' => true
+              ))
+    end
+  end
+
   describe '#extra' do
     let(:client) do
       OAuth2::Client.new('abc', 'def') do |builder|
