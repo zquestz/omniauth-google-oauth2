@@ -60,6 +60,11 @@ module OmniAuth
         )
       end
 
+      credentials do
+        # Tokens and expiration will be used from OAuth2 strategy credentials block
+        prune!({ 'scope' => token_info(access_token.token)['scope'] })
+      end
+
       extra do
         hash = {}
         hash[:id_token] = access_token['id_token']
@@ -215,12 +220,21 @@ module OmniAuth
         URI.encode_www_form(stripped_params)
       end
 
+      def token_info(access_token)
+        return nil unless access_token
+
+        @token_info ||= Hash.new do |h, k|
+          h[k] = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo', params: { access_token: access_token }).parsed
+        end
+
+        @token_info[access_token]
+      end
+
       def verify_token(access_token)
         return false unless access_token
 
-        raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo',
-                                      params: { access_token: access_token }).parsed
-        raw_response['aud'] == options.client_id || options.authorized_client_ids.include?(raw_response['aud'])
+        token_info = token_info(access_token)
+        token_info['aud'] == options.client_id || options.authorized_client_ids.include?(token_info['aud'])
       end
 
       def verify_hd(access_token)
