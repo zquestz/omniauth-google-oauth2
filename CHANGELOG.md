@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.0.1 - 2022-03-10
+
+### Added
+- Output granted scopes in credentials block of the auth hash.
+- Migrated to GitHub actions.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Overriding the `redirect_uri` via params or JSON request body.
+
 ## 1.0.0 - 2021-03-14
 
 ### Added

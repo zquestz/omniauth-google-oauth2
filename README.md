@@ -217,7 +217,7 @@ end
 For your views you can login using:
 
 ```erb
-<%# omniauth-google-oauth2 1.0.0 uses OmniAuth 2 and requires using HTTP Post to initiate authentication: %>
+<%# omniauth-google-oauth2 1.0.x uses OmniAuth 2 and requires using HTTP Post to initiate authentication: %>
 <%= link_to "Sign in with Google", user_google_oauth2_omniauth_authorize_path, method: :post %>
 
 <%# omniauth-google-oauth2 prior 1.0.0: %>
