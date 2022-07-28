@@ -9,8 +9,8 @@ Gem::Specification.new do |gem|
   gem.name          = 'omniauth-google-oauth2'
   gem.version       = OmniAuth::GoogleOauth2::VERSION
   gem.license       = 'MIT'
-  gem.summary       = %(A Google OAuth2 strategy for OmniAuth 1.x)
-  gem.description   = %(A Google OAuth2 strategy for OmniAuth 1.x. This allows you to login to Google with your ruby app.)
+  gem.summary       = %(A Google OAuth2 strategy for OmniAuth 2.x)
+  gem.description   = %(A Google OAuth2 strategy for OmniAuth 2.x. This allows you to login to Google with your ruby app.)
   gem.authors       = ['Josh Ellithorpe', 'Yury Korolev']
   gem.email         = ['quest@mac.com']
   gem.homepage      = 'https://github.com/zquestz/omniauth-google-oauth2'
@@ -21,9 +21,9 @@ Gem::Specification.new do |gem|
   gem.required_ruby_version = '>= 2.2'
 
   gem.add_runtime_dependency 'jwt', '>= 2.0'
-  gem.add_runtime_dependency 'oauth2', '~> 1.1'
+  gem.add_runtime_dependency 'oauth2', '<= 2.0.4'
   gem.add_runtime_dependency 'omniauth', '~> 2.0'
-  gem.add_runtime_dependency 'omniauth-oauth2', '~> 1.7.1'
+  gem.add_runtime_dependency 'omniauth-oauth2', '~> 1.8.0'
 
   gem.add_development_dependency 'rake', '~> 12.0'
   gem.add_development_dependency 'rspec', '~> 3.6'
