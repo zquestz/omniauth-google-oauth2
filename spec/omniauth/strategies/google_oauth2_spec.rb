@@ -659,7 +659,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     let(:client) do
-      OAuth2::Client.new('abc', 'def', { raise_errors: false }) do |builder|
+      OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
           stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
@@ -712,7 +712,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     let(:client) do
-      OAuth2::Client.new('abc', 'def', { raise_errors: false }) do |builder|
+      OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
           stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
