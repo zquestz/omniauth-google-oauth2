@@ -448,14 +448,6 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
 
       context 'when the access token is empty or nil' do
-        let(:client) do
-          OAuth2::Client.new('abc', 'def') do |builder|
-            builder.request :url_encoded
-            builder.adapter :test do |stub|
-              stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
-            end
-          end
-        end
         let(:access_token) { OAuth2::AccessToken.new(client, nil, { 'refresh_token' => 'foo' }) }
         before { allow(subject.extra).to receive(:access_token).and_return(access_token) }
 
