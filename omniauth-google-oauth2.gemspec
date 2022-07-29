@@ -21,7 +21,7 @@ Gem::Specification.new do |gem|
   gem.required_ruby_version = '>= 2.2'
 
   gem.add_runtime_dependency 'jwt', '>= 2.0'
-  gem.add_runtime_dependency 'oauth2', '<= 2.0.4'
+  gem.add_runtime_dependency 'oauth2', '~> 2.0.5'
   gem.add_runtime_dependency 'omniauth', '~> 2.0'
   gem.add_runtime_dependency 'omniauth-oauth2', '~> 1.8.0'
 
