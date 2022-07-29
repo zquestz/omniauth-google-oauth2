@@ -658,16 +658,14 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.build_access_token
     end
 
-    let(:client) do
-      OAuth2::Client.new('abc', 'def') do |builder|
+    it 'should read access_token from hash if this is not an AJAX request with a code parameter' do
+      client = OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
           stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
         end
       end
-    end
 
-    it 'should read access_token from hash if this is not an AJAX request with a code parameter' do
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return('access_token' => 'valid_access_token')
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
@@ -711,17 +709,14 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.build_access_token
     end
 
-    let(:client) do
-      OAuth2::Client.new('abc', 'def') do |builder|
+    it 'reads the access token from a json request body' do
+      body = StringIO.new(%({"access_token":"valid_access_token"}))
+      client = OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
           stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
         end
       end
-    end
-
-    it 'reads the access token from a json request body' do
-      body = StringIO.new(%({"access_token":"valid_access_token"}))
 
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:content_type).and_return('application/json')
