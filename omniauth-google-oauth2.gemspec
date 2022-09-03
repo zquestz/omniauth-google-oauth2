@@ -9,8 +9,8 @@ Gem::Specification.new do |gem|
   gem.name          = 'omniauth-google-oauth2'
   gem.version       = OmniAuth::GoogleOauth2::VERSION
   gem.license       = 'MIT'
-  gem.summary       = %(A Google OAuth2 strategy for OmniAuth 2.x)
-  gem.description   = %(A Google OAuth2 strategy for OmniAuth 2.x. This allows you to login to Google with your ruby app.)
+  gem.summary       = %(A Google OAuth2 strategy for OmniAuth 1.x)
+  gem.description   = %(A Google OAuth2 strategy for OmniAuth 1.x. This allows you to login to Google with your ruby app.)
   gem.authors       = ['Josh Ellithorpe', 'Yury Korolev']
   gem.email         = ['quest@mac.com']
   gem.homepage      = 'https://github.com/zquestz/omniauth-google-oauth2'
