@@ -242,9 +242,18 @@ describe OmniAuth::Strategies::GoogleOauth2 do
           context "authorize option #{k}" do
             let(:request) { double('Request', params: { k.to_s => 'http://example.com' }, cookies: {}, env: {}) }
 
-            it "should set the #{k} authorize option dynamically in the request" do
-              @options = { k: '' }
-              expect(subject.authorize_params[k.to_s]).to eq('http://example.com')
+            context 'when overridable_authorize_options is default' do
+              it "should set the #{k} authorize option dynamically in the request" do
+                @options = { k: '' }
+                expect(subject.authorize_params[k.to_s]).to eq('http://example.com')
+              end
+            end
+
+            context 'when overridable_authorize_options is empty' do
+              it "should not set the #{k} authorize option dynamically in the request" do
+                @options = { k: '', overridable_authorize_options: [] }
+                expect(subject.authorize_params[k.to_s]).not_to eq('http://example.com')
+              end
             end
           end
         end
@@ -252,9 +261,18 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         describe 'custom authorize_options' do
           let(:request) { double('Request', params: { 'foo' => 'something' }, cookies: {}, env: {}) }
 
-          it 'should support request overrides from custom authorize_options' do
-            @options = { authorize_options: [:foo], foo: '' }
-            expect(subject.authorize_params['foo']).to eq('something')
+          context 'when overridable_authorize_options is default' do
+            it 'should not support request overrides from custom authorize_options' do
+              @options = { authorize_options: [:foo], foo: '' }
+              expect(subject.authorize_params['foo']).not_to eq('something')
+            end
+          end
+
+          context 'when overridable_authorize_options is customized' do
+            it 'should support request overrides from custom authorize_options' do
+              @options = { authorize_options: [:foo], overridable_authorize_options: [:foo], foo: '' }
+              expect(subject.authorize_params['foo']).to eq('something')
+            end
           end
         end
       end

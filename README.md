@@ -85,6 +85,8 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `provider_ignores_state`: You will need to set this to `true` when using the `One-time Code Flow` below. In this flow there is no server side redirect that would set the state.
 
+* `overridable_authorize_options`: By default, all `authorize_options` can be overridden with request parameters. You can restrict the behavior by using this option.
+
 Here's an example of a possible configuration where the strategy name is changed, the user is asked for extra permissions, the user is always prompted to select their account when logging in and the user's profile picture is returned as a thumbnail:
 
 ```ruby
