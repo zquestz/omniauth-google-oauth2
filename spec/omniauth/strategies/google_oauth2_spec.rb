@@ -339,7 +339,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         end
       end
     end
-    let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
+    let(:access_token) { OAuth2::AccessToken.from_hash(client, { 'access_token' => 'a' }) }
     before { allow(subject).to receive(:access_token).and_return(access_token) }
 
     context 'with verified email' do
@@ -405,8 +405,6 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         end
       end
     end
-    let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
-
     before { allow(subject).to receive(:access_token).and_return(access_token) }
 
     describe 'id_token' do
@@ -467,7 +465,10 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         end
       end
 
-      context 'when the id_token is missing' do
+      context 'when the access token is empty or nil' do
+        let(:access_token) { OAuth2::AccessToken.new(client, nil, { 'refresh_token' => 'foo' }) }
+        before { allow(subject.extra).to receive(:access_token).and_return(access_token) }
+
         it 'should not include id_token' do
           expect(subject.extra).not_to have_key(:id_token)
         end
@@ -479,6 +480,19 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     describe 'raw_info' do
+      let(:token_info) do
+        {
+          'abc' => 'xyz',
+          'exp' => Time.now.to_i + 3600,
+          'nbf' => Time.now.to_i - 60,
+          'iat' => Time.now.to_i,
+          'aud' => 'appid',
+          'iss' => 'accounts.google.com'
+        }
+      end
+      let(:id_token) { JWT.encode(token_info, 'secret') }
+      let(:access_token) { OAuth2::AccessToken.from_hash(client, 'id_token' => id_token) }
+
       context 'when skip_info is true' do
         before { subject.options[:skip_info] = true }
 
@@ -663,15 +677,22 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
 
     it 'should read access_token from hash if this is not an AJAX request with a code parameter' do
+      client = OAuth2::Client.new('abc', 'def') do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
+        end
+      end
+
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return('access_token' => 'valid_access_token')
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
-      expect(subject).to receive(:client).and_return(:client)
+      expect(subject).to receive(:client).and_return(client)
 
       token = subject.build_access_token
       expect(token).to be_instance_of(::OAuth2::AccessToken)
       expect(token.token).to eq('valid_access_token')
-      expect(token.client).to eq(:client)
+      expect(token.client).to eq(client)
     end
 
     it 'reads the code from a json request body' do
@@ -708,18 +729,24 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     it 'reads the access token from a json request body' do
       body = StringIO.new(%({"access_token":"valid_access_token"}))
+      client = OAuth2::Client.new('abc', 'def') do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
+        end
+      end
 
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:content_type).and_return('application/json')
       allow(request).to receive(:body).and_return(body)
-      expect(subject).to receive(:client).and_return(:client)
+      expect(subject).to receive(:client).and_return(client)
 
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
 
       token = subject.build_access_token
       expect(token).to be_instance_of(::OAuth2::AccessToken)
       expect(token.token).to eq('valid_access_token')
-      expect(token.client).to eq(:client)
+      expect(token.client).to eq(client)
     end
 
     it 'should use callback_url without query_string if this is not an AJAX request' do
@@ -795,7 +822,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         end
       end
     end
-    let(:access_token) { OAuth2::AccessToken.from_hash(client, {}) }
+    let(:access_token) { OAuth2::AccessToken.from_hash(client, { 'access_token' => 'foo' }) }
 
     context 'when domain is nil' do
       let(:client) do
