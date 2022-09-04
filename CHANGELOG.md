@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.1.0 - 2022-09-03
+
+### Added
+- `overridable_authorize_options` has been added to restrict overriding authorize_options by request params. [#423](https://github.com/zquestz/omniauth-google-oauth2/pull/423)
+- Support for oauth2 2.0.x. [#429](https://github.com/zquestz/omniauth-google-oauth2/pull/429)
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
 ## 1.0.1 - 2022-03-10
 
 ### Added
