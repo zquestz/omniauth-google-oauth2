@@ -88,7 +88,7 @@ class App < Sinatra::Base
       <ul>
         <li>
           <form method='post' action='/auth/google_oauth2'>
-            <input type="hidden" name="authenticity_token" value='#{request.env["rack.session"]["csrf"]}'>
+            <input type="hidden" name="authenticity_token" value="#{request.env['rack.session']['csrf']}">
             <button type='submit'>Login with Google</button>
           </form>
         </li>
