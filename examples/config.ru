@@ -19,6 +19,19 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 # Main example app for omniauth-google-oauth2
 class App < Sinatra::Base
+  configure do
+    set :sessions, true
+    set :inline_templates, true
+  end
+
+  use Rack::Session::Cookie, secret: ENV['RACK_COOKIE_SECRET']
+
+  use OmniAuth::Builder do
+    # For additional provider examples please look at 'omni_auth.rb'
+    # The key provider_ignores_state is only for AJAX flows. It is not recommended for normal logins.
+    provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], access_type: 'offline', prompt: 'consent', provider_ignores_state: true, scope: 'email,profile,calendar'
+  end
+
   get '/' do
     <<-HTML
     <!DOCTYPE html>
@@ -73,7 +86,12 @@ class App < Sinatra::Base
       </head>
       <body>
       <ul>
-        <li><a href='/auth/google_oauth2'>Sign in with Google</a></li>
+        <li>
+          <form method='post' action='/auth/google_oauth2'>
+            <input type="hidden" name="authenticity_token" value='#{request.env["rack.session"]["csrf"]}'>
+            <button type='submit'>Login with Google</button>
+          </form>
+        </li>
         <li><a href='#' class="googleplus-login">Sign in with Google via AJAX</a></li>
       </ul>
       </body>
@@ -107,14 +125,6 @@ class App < Sinatra::Base
       'No Data'
     end
   end
-end
-
-use Rack::Session::Cookie, secret: ENV['RACK_COOKIE_SECRET']
-
-use OmniAuth::Builder do
-  # For additional provider examples please look at 'omni_auth.rb'
-  # The key provider_ignores_state is only for AJAX flows. It is not recommended for normal logins.
-  provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], access_type: 'offline', prompt: 'consent', provider_ignores_state: true, scope: 'email,profile,calendar'
 end
 
 run App.new
