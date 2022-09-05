@@ -69,9 +69,10 @@ module OmniAuth
 
       extra do
         hash = {}
-        hash[:id_token] = access_token.token
-        if !options[:skip_jwt] && !nil_or_empty(access_token.token)
-          decoded = ::JWT.decode(access_token.token, nil, false).first
+        token = nil_or_empty?(access_token['id_token']) ? access_token.token : access_token['id_token']
+        hash[:id_token] = token
+        if !options[:skip_jwt] && !nil_or_empty?(token)
+          decoded = ::JWT.decode(token, nil, false).first
 
           # We have to manually verify the claims because the third parameter to
           # JWT.decode is false since no verification key is provided.
@@ -108,7 +109,7 @@ module OmniAuth
 
       private
 
-      def nil_or_empty(obj)
+      def nil_or_empty?(obj)
         obj.is_a?(String) ? obj.empty? : obj.nil?
       end
 
