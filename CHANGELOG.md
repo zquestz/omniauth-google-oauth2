@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.1.1 - 2022-09-05
+
+### Added
+- Nothing.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Fixed JWT decoding issue. (Invalid segment encoding) [#431](https://github.com/zquestz/omniauth-google-oauth2/pull/431)
+
 ## 1.1.0 - 2022-09-03
 
 ### Added
