@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'multi_json'
 require 'jwt'
 require 'omniauth/strategies/oauth2'
 require 'uri'
@@ -12,6 +11,7 @@ module OmniAuth
       BASE_SCOPE_URL = 'https://www.googleapis.com/auth/'
       BASE_SCOPES = %w[profile email openid].freeze
       DEFAULT_SCOPE = 'email,profile'
+      USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'.freeze
 
       option :name, 'google_oauth2'
       option :skip_friends, true
@@ -23,9 +23,9 @@ module OmniAuth
       option :verify_iss, true
 
       option :client_options,
-             site: 'https://accounts.google.com',
-             authorize_url: '/o/oauth2/auth',
-             token_url: '/o/oauth2/token'
+             site: 'https://oauth2.googleapis.com',
+             authorize_url: 'https://accounts.google.com/o/oauth2/auth',
+             token_url: '/token'
 
       def authorize_params
         super.tap do |params|
@@ -60,7 +60,7 @@ module OmniAuth
         hash = {}
         hash[:id_token] = access_token['id_token']
         if !options[:skip_jwt] && !access_token['id_token'].nil?
-          hash[:id_info] = JWT.decode(
+          hash[:id_info] = ::JWT.decode(
             access_token['id_token'], nil, false, verify_iss: options.verify_iss,
                                                   iss: 'accounts.google.com',
                                                   verify_aud: true,
@@ -74,21 +74,11 @@ module OmniAuth
           ).first
         end
         hash[:raw_info] = raw_info unless skip_info?
-        hash[:raw_friend_info] = raw_friend_info(raw_info['sub']) unless skip_info? || options[:skip_friends]
-        hash[:raw_image_info] = raw_image_info(raw_info['sub']) unless skip_info? || options[:skip_image_info]
         prune! hash
       end
 
       def raw_info
-        @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
-      end
-
-      def raw_friend_info(id)
-        @raw_friend_info ||= access_token.get("https://www.googleapis.com/plus/v1/people/#{id}/people/visible").parsed
-      end
-
-      def raw_image_info(id)
-        @raw_image_info ||= access_token.get("https://www.googleapis.com/plus/v1/people/#{id}?fields=image").parsed
+        @raw_info ||= access_token.get(USER_INFO_URL).parsed
       end
 
       def custom_build_access_token
@@ -194,6 +184,7 @@ module OmniAuth
 
       def verify_token(access_token)
         return false unless access_token
+
         raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo',
                                       params: { access_token: access_token }).parsed
         raw_response['aud'] == options.client_id || options.authorized_client_ids.include?(raw_response['aud'])
@@ -201,12 +192,14 @@ module OmniAuth
 
       def verify_hd(access_token)
         return true unless options.hd
-        @raw_info ||= access_token.get('https://www.googleapis.com/plus/v1/people/me/openIdConnect').parsed
+
+        @raw_info ||= access_token.get(USER_INFO_URL).parsed
 
         options.hd = options.hd.call if options.hd.is_a? Proc
         allowed_hosted_domains = Array(options.hd)
 
-        raise CallbackError.new(:invalid_hd, 'Invalid Hosted Domain') unless allowed_hosted_domains.include? @raw_info['hd']
+        raise CallbackError.new(:invalid_hd, 'Invalid Hosted Domain') unless allowed_hosted_domains.include?(@raw_info['hd']) || options.hd == '*'
+
         true
       end
     end
