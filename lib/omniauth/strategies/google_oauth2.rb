@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'jwt'
-require 'oauth2'
 require 'omniauth/strategies/oauth2'
 require 'uri'
 
@@ -9,22 +8,19 @@ module OmniAuth
   module Strategies
     # Main class for Google OAuth2 strategy.
     class GoogleOauth2 < OmniAuth::Strategies::OAuth2
-      ALLOWED_ISSUERS = ['accounts.google.com', 'https://accounts.google.com'].freeze
       BASE_SCOPE_URL = 'https://www.googleapis.com/auth/'
       BASE_SCOPES = %w[profile email openid].freeze
       DEFAULT_SCOPE = 'email,profile'
-      USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
-      IMAGE_SIZE_REGEXP = /(s\d+(-c)?)|(w\d+-h\d+(-c)?)|(w\d+(-c)?)|(h\d+(-c)?)|c/
-      AUTHORIZE_OPTIONS = %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes openid_realm device_id device_name]
+      USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'.freeze
 
       option :name, 'google_oauth2'
       option :skip_friends, true
       option :skip_image_info, true
       option :skip_jwt, false
       option :jwt_leeway, 60
-      option :authorize_options, AUTHORIZE_OPTIONS
-      option :overridable_authorize_options, AUTHORIZE_OPTIONS
+      option :authorize_options, %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes openid_realm device_id device_name]
       option :authorized_client_ids, []
+      option :verify_iss, true
 
       option :client_options,
              site: 'https://oauth2.googleapis.com',
@@ -33,7 +29,7 @@ module OmniAuth
 
       def authorize_params
         super.tap do |params|
-          (options[:authorize_options] & options[:overridable_authorize_options]).each do |k|
+          options[:authorize_options].each do |k|
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
 
@@ -51,8 +47,6 @@ module OmniAuth
         prune!(
           name: raw_info['name'],
           email: verified_email,
-          unverified_email: raw_info['email'],
-          email_verified: raw_info['email_verified'],
           first_name: raw_info['given_name'],
           last_name: raw_info['family_name'],
           image: image_url,
@@ -62,33 +56,22 @@ module OmniAuth
         )
       end
 
-      credentials do
-        # Tokens and expiration will be used from OAuth2 strategy credentials block
-        prune!({ 'scope' => token_info(access_token.token)['scope'] })
-      end
-
       extra do
         hash = {}
-        token = nil_or_empty?(access_token['id_token']) ? access_token.token : access_token['id_token']
-        hash[:id_token] = token
-        if !options[:skip_jwt] && !nil_or_empty?(token)
-          decoded = ::JWT.decode(token, nil, false).first
-
-          # We have to manually verify the claims because the third parameter to
-          # JWT.decode is false since no verification key is provided.
-          ::JWT::Verify.verify_claims(decoded,
-                                      verify_iss: true,
-                                      iss: ALLOWED_ISSUERS,
-                                      verify_aud: true,
-                                      aud: options.client_id,
-                                      verify_sub: false,
-                                      verify_expiration: true,
-                                      verify_not_before: true,
-                                      verify_iat: false,
-                                      verify_jti: false,
-                                      leeway: options[:jwt_leeway])
-
-          hash[:id_info] = decoded
+        hash[:id_token] = access_token['id_token']
+        if !options[:skip_jwt] && !access_token['id_token'].nil?
+          hash[:id_info] = ::JWT.decode(
+            access_token['id_token'], nil, false, verify_iss: options.verify_iss,
+                                                  iss: 'accounts.google.com',
+                                                  verify_aud: true,
+                                                  aud: options.client_id,
+                                                  verify_sub: false,
+                                                  verify_expiration: true,
+                                                  verify_not_before: true,
+                                                  verify_iat: true,
+                                                  verify_jti: false,
+                                                  leeway: options[:jwt_leeway]
+          ).first
         end
         hash[:raw_info] = raw_info unless skip_info?
         prune! hash
@@ -104,53 +87,29 @@ module OmniAuth
         verify_hd(access_token)
         access_token
       end
-
       alias build_access_token custom_build_access_token
 
       private
 
-      def nil_or_empty?(obj)
-        obj.is_a?(String) ? obj.empty? : obj.nil?
-      end
-
       def callback_url
-        options[:redirect_uri] || (full_host + callback_path)
+        options[:redirect_uri] || (full_host + script_name + callback_path)
       end
 
       def get_access_token(request)
-        verifier = request.params['code']
-        redirect_uri = request.params['redirect_uri']
-        access_token = request.params['access_token']
-        if verifier && request.xhr?
-          client_get_token(verifier, redirect_uri || 'postmessage')
-        elsif verifier
-          client_get_token(verifier, redirect_uri || callback_url)
-        elsif access_token && verify_token(access_token)
+        if request.xhr? && request.params['code']
+          verifier = request.params['code']
+          redirect_uri = request.params['redirect_uri'] || 'postmessage'
+          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
+        elsif request.params['code'] && request.params['redirect_uri']
+          verifier = request.params['code']
+          redirect_uri = request.params['redirect_uri']
+          client.auth_code.get_token(verifier, get_token_options(redirect_uri), deep_symbolize(options.auth_token_params || {}))
+        elsif verify_token(request.params['access_token'])
           ::OAuth2::AccessToken.from_hash(client, request.params.dup)
-        elsif request.content_type =~ /json/i
-          begin
-            body = JSON.parse(request.body.read)
-            request.body.rewind # rewind request body for downstream middlewares
-            verifier = body && body['code']
-            access_token = body && body['access_token']
-            redirect_uri ||= body && body['redirect_uri']
-            if verifier
-              client_get_token(verifier, redirect_uri || 'postmessage')
-            elsif verify_token(access_token)
-              ::OAuth2::AccessToken.from_hash(client, body.dup)
-            end
-          rescue JSON::ParserError => e
-            warn "[omniauth google-oauth2] JSON parse error=#{e}"
-          end
+        else
+          verifier = request.params['code']
+          client.auth_code.get_token(verifier, get_token_options(callback_url), deep_symbolize(options.auth_token_params))
         end
-      end
-
-      def client_get_token(verifier, redirect_uri)
-        client.auth_code.get_token(verifier, get_token_options(redirect_uri), get_token_params)
-      end
-
-      def get_token_params
-        deep_symbolize(options.auth_token_params || {})
       end
 
       def get_scope(params)
@@ -160,11 +119,7 @@ module OmniAuth
         scope_list.join(' ')
       end
 
-      def verified_email
-        raw_info['email_verified'] ? raw_info['email'] : nil
-      end
-
-      def get_token_options(redirect_uri = '')
+      def get_token_options(redirect_uri)
         { redirect_uri: redirect_uri }.merge(token_params.to_hash(symbolize_keys: true))
       end
 
@@ -173,6 +128,10 @@ module OmniAuth
           prune!(v) if v.is_a?(Hash)
           v.nil? || (v.respond_to?(:empty?) && v.empty?)
         end
+      end
+
+      def verified_email
+        raw_info['email_verified'] ? raw_info['email'] : nil
       end
 
       def image_url
@@ -185,10 +144,6 @@ module OmniAuth
         if path_index && image_size_opts_passed?
           u.path.insert(path_index, image_params)
           u.path = u.path.gsub('//', '/')
-
-          # Check if the image is already sized!
-          split_path = u.path.split('/')
-          u.path = u.path.sub("/#{split_path[-3]}", '') if split_path[-3] =~ IMAGE_SIZE_REGEXP
         end
 
         u.query = strip_unnecessary_query_parameters(u.query)
@@ -227,21 +182,12 @@ module OmniAuth
         URI.encode_www_form(stripped_params)
       end
 
-      def token_info(access_token)
-        return nil unless access_token
-
-        @token_info ||= Hash.new do |h, k|
-          h[k] = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo', params: { access_token: access_token }).parsed
-        end
-
-        @token_info[access_token]
-      end
-
       def verify_token(access_token)
         return false unless access_token
 
-        token_info = token_info(access_token)
-        token_info['aud'] == options.client_id || options.authorized_client_ids.include?(token_info['aud'])
+        raw_response = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo',
+                                      params: { access_token: access_token }).parsed
+        raw_response['aud'] == options.client_id || options.authorized_client_ids.include?(raw_response['aud'])
       end
 
       def verify_hd(access_token)
