@@ -40,6 +40,8 @@ You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
 
 For more examples please check out `examples/omni_auth.rb`
 
+[Using Devise? Skip the above and jump down to the Devise section!](#devise) After setting up the provider via Devise, you can reference the confdiurations below.
+
 NOTE: While developing your application, if you change the scope in the initializer you will need to restart your app server. Remember that either the 'email' or 'profile' scope is required!
 
 ## Configuration
