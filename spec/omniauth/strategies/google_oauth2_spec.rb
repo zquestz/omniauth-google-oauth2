@@ -176,6 +176,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
     end
 
+    describe 'enable_granular_consent' do
+      it 'should default to nil' do
+        expect(subject.authorize_params['enable_granular_consent']).to eq(nil)
+      end
+
+      it 'should set the enable_granular_consent parameter if present' do
+        @options = { enable_granular_consent: 'true' }
+        expect(subject.authorize_params['enable_granular_consent']).to eq('true')
+      end
+    end
+
     describe 'scope' do
       it 'should expand scope shortcuts' do
         @options = { scope: 'calendar' }

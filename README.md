@@ -83,6 +83,8 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `include_granted_scopes`: If this is provided with the value true, and the authorization request is granted, the authorization will include any previous authorizations granted to this user/application combination for other scopes. See Google's [Incremental Authorization](https://developers.google.com/accounts/docs/OAuth2WebServer#incrementalAuth) for additional details.
 
+* `enable_granular_consent`: If this is provided with the value true, users can choose to only grant access to specific data. See Google's [How to handle granular permissions](https://developers.google.com/identity/protocols/oauth2/resources/granular-permissions) guide for additional details.
+
 * `openid_realm`: Set the OpenID realm value, to allow upgrading from OpenID based authentication to OAuth 2 based authentication. When this is set correctly an `openid_id` value will be set in `['extra']['id_info']` in the authentication hash with the value of the user's OpenID ID URL.
 
 * `provider_ignores_state`: You will need to set this to `true` when using the `One-time Code Flow` below. In this flow there is no server side redirect that would set the state.
