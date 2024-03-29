@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.1.2 - 2024-03-28
+
+### Added
+- Add support for enable_granular_consent option (#455)
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
 ## 1.1.1 - 2022-09-05
 
 ### Added
