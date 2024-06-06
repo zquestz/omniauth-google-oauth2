@@ -384,7 +384,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.options.client_options[:connection_build] = proc do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/oauth2/v3/tokeninfo?access_token=valid_access_token') do
+          stub.post('/oauth2/v3/tokeninfo', 'access_token=valid_access_token') do
             [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(
               aud: '000000000000.apps.googleusercontent.com',
               sub: '123456789',
@@ -781,7 +781,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.options.client_options[:connection_build] = proc do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
-          stub.get('/oauth2/v3/tokeninfo?access_token=valid_access_token') do
+          stub.post('/oauth2/v3/tokeninfo', 'access_token=valid_access_token') do
             [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(
               aud: '000000000000.apps.googleusercontent.com',
               sub: '123456789',
@@ -792,7 +792,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
               expires_in: 436
             )]
           end
-          stub.get('/oauth2/v3/tokeninfo?access_token=invalid_access_token') do
+          stub.post('/oauth2/v3/tokeninfo', 'access_token=invalid_access_token') do
             [400, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(error_description: 'Invalid Value')]
           end
         end
