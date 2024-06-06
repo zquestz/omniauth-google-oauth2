@@ -231,7 +231,7 @@ module OmniAuth
         return nil unless access_token
 
         @token_info ||= Hash.new do |h, k|
-          h[k] = client.request(:get, 'https://www.googleapis.com/oauth2/v3/tokeninfo', params: { access_token: access_token }).parsed
+          h[k] = client.request(:post, 'https://www.googleapis.com/oauth2/v3/tokeninfo', body: { access_token: access_token }).parsed
         end
 
         @token_info[access_token]
