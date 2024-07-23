@@ -235,7 +235,7 @@ For your views you can login using:
 <%= link_to "Sign in with Google", user_omniauth_authorize_path(:google_oauth2) %>
 ```
 
-An overview is available at https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
+An overview is available at https://github.com/heartcombo/devise/wiki/OmniAuth:-Overview
 
 ### One-time Code Flow (Hybrid Authentication)
 
