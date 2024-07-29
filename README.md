@@ -40,7 +40,7 @@ You can now access the OmniAuth Google OAuth2 URL: `/auth/google_oauth2`
 
 For more examples please check out `examples/omni_auth.rb`
 
-[Using Devise? Skip the above and jump down to the Devise section!](#devise) After setting up the provider via Devise, you can reference the confdiurations below.
+[Using Devise? Skip the above and jump down to the Devise section!](#devise) After setting up the provider via Devise, you can reference the configurations below.
 
 NOTE: While developing your application, if you change the scope in the initializer you will need to restart your app server. Remember that either the 'email' or 'profile' scope is required!
 
@@ -205,6 +205,8 @@ end
 and bind to or create the user
 
 ```ruby
+# app/mocdels/user.rb
+
 def self.from_omniauth(access_token)
     data = access_token.info
     user = User.where(email: data['email']).first
@@ -233,7 +235,7 @@ For your views you can login using:
 <%= link_to "Sign in with Google", user_omniauth_authorize_path(:google_oauth2) %>
 ```
 
-An overview is available at https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
+An overview is available at https://github.com/heartcombo/devise/wiki/OmniAuth:-Overview
 
 ### One-time Code Flow (Hybrid Authentication)
 
