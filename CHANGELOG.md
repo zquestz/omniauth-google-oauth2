@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.1.3 - 2024-08-29
+
+### Added
+- Updated to use POST instead of GET for tokeninfo endpoint.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Documentation typos.
+- Rubocop configuration updates.
+
 ## 1.1.2 - 2024-03-28
 
 ### Added
