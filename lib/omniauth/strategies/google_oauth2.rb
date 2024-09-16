@@ -76,17 +76,17 @@ module OmniAuth
 
           # We have to manually verify the claims because the third parameter to
           # JWT.decode is false since no verification key is provided.
-          ::JWT::Verify.verify_claims(decoded,
-                                      verify_iss: true,
-                                      iss: ALLOWED_ISSUERS,
-                                      verify_aud: true,
-                                      aud: options.client_id,
-                                      verify_sub: false,
-                                      verify_expiration: true,
-                                      verify_not_before: true,
-                                      verify_iat: false,
-                                      verify_jti: false,
-                                      leeway: options[:jwt_leeway])
+          ::JWT::Claims.verify!(decoded,
+                                verify_iss: true,
+                                iss: ALLOWED_ISSUERS,
+                                verify_aud: true,
+                                aud: options.client_id,
+                                verify_sub: false,
+                                verify_expiration: true,
+                                verify_not_before: true,
+                                verify_iat: false,
+                                verify_jti: false,
+                                leeway: options[:jwt_leeway])
 
           hash[:id_info] = decoded
         end
