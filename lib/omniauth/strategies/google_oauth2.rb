@@ -178,17 +178,16 @@ module OmniAuth
       def image_url
         return nil unless raw_info['picture']
 
-        u = URI.parse(raw_info['picture'].gsub('https:https', 'https'))
+        u = URI.parse(raw_info['picture'])
 
-        path_index = u.path.to_s.index('/photo.jpg')
+        md = u.path.to_s.match(/(.*)(=((w[0-9]*|h[0-9]*|s[0-9]*|c|p)-?)*)$/)
 
-        if path_index && image_size_opts_passed?
-          u.path.insert(path_index, image_params)
+        # Check for sizing, remove if present.
+        u.path = md[1] if md && !md[1].nil? && !md[2].nil?
+
+        if image_size_opts_passed?
+          u.path += image_params
           u.path = u.path.gsub('//', '/')
-
-          # Check if the image is already sized!
-          split_path = u.path.split('/')
-          u.path = u.path.sub("/#{split_path[-3]}", '') if split_path[-3] =~ IMAGE_SIZE_REGEXP
         end
 
         u.query = strip_unnecessary_query_parameters(u.query)
@@ -210,8 +209,9 @@ module OmniAuth
           image_params << "h#{options[:image_size][:height]}" if options[:image_size][:height]
         end
         image_params << 'c' if options[:image_aspect_ratio] == 'square'
+        image_params << 'p' if options[:image_aspect_ratio] == 'smart'
 
-        "/#{image_params.join('-')}"
+        "=#{image_params.join('-')}"
       end
 
       def strip_unnecessary_query_parameters(query_parameters)

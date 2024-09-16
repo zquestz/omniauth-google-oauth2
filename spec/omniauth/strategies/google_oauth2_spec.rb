@@ -544,103 +544,146 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     describe 'when a picture is returned from google' do
       it 'should return the image with size specified in the `image_size` option' do
         @options = { image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50')
       end
 
       it 'should return the image with size specified in the `image_size` option when sizing is in the picture' do
         @options = { image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh4.googleusercontent.com/url/s96-c/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh4.googleusercontent.com/url/s50/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s96' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50')
       end
 
-      it 'should handle a picture with too many slashes correctly' do
+      it 'should return the image with size specified in the `image_size` option when sizing is in the picture and cropped' do
         @options = { image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url//photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s96-c' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50')
       end
 
-      it 'should handle a picture with a size query parameter correctly' do
+      it 'should handle a picture with too many slashes' do
         @options = { image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg?sz=50' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a//ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50')
+      end
+
+      it 'should handle a picture with a size query parameter' do
+        @options = { image_size: 50 }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0?sz=96' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50')
+      end
+
+      it 'should handle a picture with a size query parameter and sizing is in the picture' do
+        @options = { image_size: 50 }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s96-c?sz=96' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50')
       end
 
       it 'should handle a picture with a size query parameter and other valid query parameters correctly' do
         @options = { image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg?sz=50&hello=true&life=42' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg?hello=true&life=42')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0?sz=50&hello=true&life=42' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50?hello=true&life=42')
+      end
+
+      it 'should handle a picture with a size query parameter, other valid query parameters and sizing is in the picture correctly' do
+        @options = { image_size: 50 }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s96-c?sz=50&hello=true&life=42' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50?hello=true&life=42')
       end
 
       it 'should handle a picture with other valid query parameters correctly' do
         @options = { image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg?hello=true&life=42' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50/photo.jpg?hello=true&life=42')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0?hello=true&life=42' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50?hello=true&life=42')
       end
 
       it 'should return the image with width and height specified in the `image_size` option' do
         @options = { image_size: { width: 50, height: 40 } }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w50-h40')
       end
 
       it 'should return the image with width and height specified in the `image_size` option when sizing is in the picture' do
         @options = { image_size: { width: 50, height: 40 } }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/w100-h80-c/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w100-h80-c' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w50-h40')
       end
 
-      it 'should return square image when `image_aspect_ratio` is specified' do
+      it 'should return square image when square `image_aspect_ratio` is specified' do
         @options = { image_aspect_ratio: 'square' }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/c/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=c')
       end
 
-      it 'should return square image when `image_aspect_ratio` is specified and sizing is in the picture' do
+      it 'should return square image when square `image_aspect_ratio` is specified and sizing is in the picture' do
         @options = { image_aspect_ratio: 'square' }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/c/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/c/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50-c' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=c')
       end
 
-      it 'should return square sized image when `image_aspect_ratio` and `image_size` is set' do
+      it 'should return smart image when smart `image_aspect_ratio` is specified' do
+        @options = { image_aspect_ratio: 'smart' }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=p')
+      end
+
+      it 'should return smart image when smart `image_aspect_ratio` is specified and sizing is in the picture' do
+        @options = { image_aspect_ratio: 'smart' }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50-c' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=p')
+      end
+
+      it 'should return square sized image when square `image_aspect_ratio` and `image_size` is set' do
         @options = { image_aspect_ratio: 'square', image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50-c/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50-c')
       end
 
-      it 'should return square sized image when `image_aspect_ratio` and `image_size` is set and sizing is in the picture' do
+      it 'should return square sized image when square `image_aspect_ratio` and `image_size` is set and sizing is in the picture' do
         @options = { image_aspect_ratio: 'square', image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/s90/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/s50-c/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s90' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50-c')
       end
 
-      it 'should return square sized image when `image_aspect_ratio` and `image_size` has height and width' do
+      it 'should return smart sized image when smart `image_aspect_ratio` and `image_size` is set' do
+        @options = { image_aspect_ratio: 'smart', image_size: 50 }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50-p')
+      end
+
+      it 'should return smart sized image when smart `image_aspect_ratio` and `image_size` is set and sizing is in the picture' do
+        @options = { image_aspect_ratio: 'smart', image_size: 50 }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s90' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=s50-p')
+      end
+
+      it 'should return square sized image when square `image_aspect_ratio` and `image_size` has height and width' do
         @options = { image_aspect_ratio: 'square', image_size: { width: 50, height: 40 } }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40-c/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w50-h40-c')
       end
 
-      it 'should return square sized image when `image_aspect_ratio` and `image_size` has height and width and sizing is in the picture' do
+      it 'should return square sized image when square `image_aspect_ratio` and `image_size` has height and width and sizing is in the picture' do
         @options = { image_aspect_ratio: 'square', image_size: { width: 50, height: 40 } }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/w100-h80/photo.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/w50-h40-c/photo.jpg')
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w100-h80-c' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w50-h40-c')
       end
 
-      it 'should return original image if image url does not end in `photo.jpg`' do
-        @options = { image_size: 50 }
-        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photograph.jpg' } }
-        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photograph.jpg')
+      it 'should return smart sized image when smart `image_aspect_ratio` and `image_size` has height and width' do
+        @options = { image_aspect_ratio: 'smart', image_size: { width: 50, height: 40 } }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w50-h40-p')
+      end
+
+      it 'should return smart sized image when smart `image_aspect_ratio` and `image_size` has height and width and sizing is in the picture' do
+        @options = { image_aspect_ratio: 'smart', image_size: { width: 50, height: 40 } }
+        allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w100-h80-c' } }
+        expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0=w50-h40-p')
       end
     end
 
     it 'should return original image if no options are provided' do
-      allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/url/photo.jpg' } }
-      expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
-    end
-
-    it 'should return correct image if google image url has double https' do
-      allow(subject).to receive(:raw_info) { { 'picture' => 'https:https://lh3.googleusercontent.com/url/photo.jpg' } }
-      expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/url/photo.jpg')
+      allow(subject).to receive(:raw_info) { { 'picture' => 'https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0' } }
+      expect(subject.info[:image]).to eq('https://lh3.googleusercontent.com/a/ACg8ocKN8F32STvmW-LG0Rl_9re5-Pv2cCn0ayodas6BQFPGEArMOtn0')
     end
   end
 
