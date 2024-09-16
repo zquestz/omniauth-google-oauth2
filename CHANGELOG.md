@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.2.0 - 2024-09-15
+
+### Added
+- jwt 2.9.0 support for their updated claims code.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Ruby 2.3 and 2.4 support.
+- Support for jwt < 2.9.0.
+
+### Fixed
+- Fixed image sizing code.
+- Rubocop configuration updates.
+
 ## 1.1.3 - 2024-08-29
 
 ### Added

@@ -64,6 +64,7 @@ You can configure several options, which you pass in to the `provider` method vi
 * `image_aspect_ratio`: The shape of the user's profile picture. Possible values are:
   * `original`: Picture maintains its original aspect ratio.
   * `square`: Picture presents equal width and height.
+  * `smart`: Picture presents equal width and height with smart cropping.
 
   Defaults to `original`.
 
