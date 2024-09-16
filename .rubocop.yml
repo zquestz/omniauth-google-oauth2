@@ -28,3 +28,5 @@ Style/HashTransformKeys:
   Enabled: false
 Style/HashTransformValues:
   Enabled: false
+AllCops:
+  NewCops: enable

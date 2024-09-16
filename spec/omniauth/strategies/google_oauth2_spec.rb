@@ -324,20 +324,20 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     it 'has the correct default callback path' do
       allow(subject).to receive(:full_host) { base_url }
       allow(subject).to receive(:script_name) { '' }
-      expect(subject.send(:callback_url)).to eq(base_url + '/auth/google_oauth2/callback')
+      expect(subject.send(:callback_url)).to eq("#{base_url}/auth/google_oauth2/callback")
     end
 
     it 'should set the callback path with script_name if present' do
       allow(subject).to receive(:full_host) { base_url }
       allow(subject).to receive(:script_name) { '/v1' }
-      expect(subject.send(:callback_url)).to eq(base_url + '/v1/auth/google_oauth2/callback')
+      expect(subject.send(:callback_url)).to eq("#{base_url}/v1/auth/google_oauth2/callback")
     end
 
     it 'should set the callback_path parameter if present' do
       @options = { callback_path: '/auth/foo/callback' }
       allow(subject).to receive(:full_host) { base_url }
       allow(subject).to receive(:script_name) { '' }
-      expect(subject.send(:callback_url)).to eq(base_url + '/auth/foo/callback')
+      expect(subject.send(:callback_url)).to eq("#{base_url}/auth/foo/callback")
     end
   end
 

@@ -202,15 +202,16 @@ module OmniAuth
 
       def image_params
         image_params = []
-        if options[:image_size].is_a?(Integer)
+        case options[:image_size]
+        when Integer
           image_params << "s#{options[:image_size]}"
-        elsif options[:image_size].is_a?(Hash)
+        when Hash
           image_params << "w#{options[:image_size][:width]}" if options[:image_size][:width]
           image_params << "h#{options[:image_size][:height]}" if options[:image_size][:height]
         end
         image_params << 'c' if options[:image_aspect_ratio] == 'square'
 
-        '/' + image_params.join('-')
+        "/#{image_params.join('-')}"
       end
 
       def strip_unnecessary_query_parameters(query_parameters)
