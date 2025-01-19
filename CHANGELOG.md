@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.2.1 - 2025-01-18
+
+### Added
+- Use jwt v2.9.2's public claims verification API - https://github.com/zquestz/omniauth-google-oauth2/pull/465
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Support for jwt < 2.9.2.
+
+### Fixed
+- Nothing.
+
 ## 1.2.0 - 2024-09-15
 
 ### Added
