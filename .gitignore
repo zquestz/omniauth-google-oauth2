@@ -20,3 +20,4 @@ test/version_tmp
 tmp
 .powenv
 .idea/
+examples/Gemfile.lock
