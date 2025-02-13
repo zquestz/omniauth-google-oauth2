@@ -239,14 +239,56 @@ For your views you can login using:
 
 An overview is available at https://github.com/heartcombo/devise/wiki/OmniAuth:-Overview
 
+#### Note about multi-platform authentication (Web, Android, IOS, ...)
+
+If you authenticate your user from multiple different platforms with a single API you will likely have different Google `client_id` depending on the platform.
+
+This could raise errors in the callback step because the `client_id` used in the callback needs to be the same as the one used in the sign in request.
+
+To handle multiple `client_id` you can register multiple omniauth middlewares in your devise initializer with different names and different client ids. You can then register each middleware in your omniauthable model and add a new action in your `OmniauthCallbacksController` for each additional middleware.
+
+```ruby
+# config/initializers/devise.rb
+
+config.omniauth :google_oauth2, 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', { name: 'google_oauth2' }
+
+# Native mobile applications don't require a `client_secret`
+config.omniauth :google_oauth2, 'GOOGLE_CLIENT_ID_ANDROID', { name: 'google_oauth2_android' }
+config.omniauth :google_oauth2, 'GOOGLE_CLIENT_ID_IOS', { name: 'google_oauth2_ios' }
+```
+
+```ruby
+# app/models/user.rb
+
+devise :omniauthable, omniauth_providers: %i[google_oauth2 google_oauth2_android google_oauth2_ios]
+```
+
+```ruby
+# app/controllers/users/omniauth_callbacks_controller.rb:
+
+class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  def google_oauth2
+    # ...
+  end
+
+  def google_oauth2_android
+    # ...
+  end
+
+  def google_oauth2_ios
+    # ...
+  end
+end
+```
+
 ### One-time Code Flow (Hybrid Authentication)
 
-Google describes the One-time Code Flow [here](https://developers.google.com/identity/sign-in/web/server-side-flow).  This hybrid authentication flow has significant functional and security advantages over a pure server-side or pure client-side flow.  The following steps occur in this flow:
+Google describes the One-time Code Flow [here](https://developers.google.com/identity/protocols/oauth2). This hybrid authentication flow has significant functional and security advantages over a pure server-side or pure client-side flow. The following steps occur in this flow:
 
-1. The client (web browser) authenticates the user directly via Google's JS API.  During this process assorted modals may be rendered by Google.
+1. The client (web browser) authenticates the user directly via Google's OAuth 2 API. During this process assorted modals may be rendered by Google.
 2. On successful authentication, Google returns a one-time use code, which requires the Google client secret (which is only available server-side).
 3. Using a AJAX request, the code is POSTed to the Omniauth Google OAuth2 callback.
-4. The Omniauth Google OAuth2 gem will validate the code via a server-side request to Google.  If the code is valid, then Google will return an access token and, if this is the first time this user is authenticating against this application, a refresh token.  Both of these should be stored on the server.  The response to the AJAX request indicates the success or failure of this process.
+4. The Omniauth Google OAuth2 gem will validate the code via a server-side request to Google. If the code is valid, then Google will return an access token and, if this is the first time this user is authenticating against this application, a refresh token.  Both of these should be stored on the server. The response to the AJAX request indicates the success or failure of this process.
 
 This flow is immune to replay attacks, and conveys no useful information to a man in the middle.
 
@@ -254,38 +296,52 @@ The omniauth-google-oauth2 gem supports this mode of operation when `provider_ig
 
 ```javascript
 // Basic hybrid auth example following the pattern at:
-// https://developers.google.com/identity/sign-in/web/reference
+// https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow
 
-<script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>
+const handleGoogleOauthSignIn = () => {
+  // Google's OAuth 2.0 endpoint for requesting an access token
+  const oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
 
-...
-
-function init() {
-  gapi.load('auth2', function() {
-    // Ready.
-    $('.google-login-button').click(function(e) {
-      e.preventDefault();
-
-      gapi.auth2.authorize({
-        client_id: 'YOUR_CLIENT_ID',
-        cookie_policy: 'single_host_origin',
-        scope: 'email profile',
-        response_type: 'code'
-      }, function(response) {
-        if (response && !response.error) {
-          // google authentication succeed, now post data to server.
-          jQuery.ajax({type: 'POST', url: '/auth/google_oauth2/callback', data: response,
-            success: function(data) {
-              // response from server
-            }
-          });
-        } else {
-          // google authentication failed
-        }
-      });
-    });
+  // Parameters to pass to OAuth 2.0 endpoint.
+  const params = new URLSearchParams({
+    client_id: YOUR_CLIENT_ID,
+    prompt: 'select_account'
+    redirect_uri: YOUR_REDIRECT_URI, // This redirect_uri needs to redirect to the same domain as the one where this request is made from.
+    response_type: 'code',
+    scope: 'email openid profile',
+    state: 'google', // The state will be added in the redirect_uri's query params. Use can this if you use the same redirect_uri with different omniauth provider to know which one you're currently handling for example.
   });
-};
+
+  const url = `${oauth2Endpoint}?${params.toString()}`;
+
+  // Create <a> element to redirect to OAuth 2.0 endpoint.
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_self';
+
+  // Add a to page and click it to open the OAuth 2.0 endpoint.
+  document.body.appendChild(a);
+  a.click();
+}
+
+// Call this method when redirected to your `redirect_uri`
+const handleGoogleOauthCallback = async () => {
+  // Get the query params Google included in your `redirect_uri`
+  const params = new URL(document.location.toString()).searchParams;
+  const code = params.get('code');
+  const state = params.get('state') // the `state` you added in the sign in request is here if you need it.
+
+  const response = fetch('your.api.domain/auth/google_oauth2/callback', {
+    body: JSON.stringify({
+      code,
+      redirect_uri: YOUR_REDIRECT_URI, // The `redirect_uri` used in the server needs to be the same as as initially used in the client.
+    }),
+    headers: {
+      'Content-type': 'application/json',
+    },
+    method: 'POST',
+  });
+}
 ```
 
 #### Note about mobile clients (iOS, Android)
@@ -297,66 +353,6 @@ In that case, ensure to send an additional parameter `redirect_uri=` (empty stri
 #### Note about CORS
 
 If you're making POST requests to `/auth/google_oauth2/callback` from another domain, then you need to make sure `'X-Requested-With': 'XMLHttpRequest'` header is included with your request, otherwise your server might respond with `OAuth2::Error, : Invalid Value` error.
-
-#### Getting around the `redirect_uri_mismatch` error (See [Issue #365](https://github.com/zquestz/omniauth-google-oauth2/issues/365))
-
-If you are struggling with a persistent `redirect_uri_mismatch`, you can instead pass the `access_token` from [`getAuthResponse`](https://developers.google.com/identity/sign-in/web/reference#googleusergetauthresponseincludeauthorizationdata) directly to the `auth/google_oauth2/callback` endpoint, like so:
-
-```javascript
-// Initialize the GoogleAuth object
-let googleAuth;
-gapi.load('client:auth2', async () => {
-  await gapi.client.init({ scope: '...', client_id: '...' });
-  googleAuth = gapi.auth2.getAuthInstance();
-});
-
-// Call this when the Google Sign In button is clicked
-async function signInGoogle() {
-  const googleUser = await googleAuth.signIn(); // wait for the user to authorize through the modal
-  const { access_token } = googleUser.getAuthResponse();
-
-  const data = new FormData();
-  data.append('access_token', access_token);
-
-  const response = await api.post('/auth/google_oauth2/callback', data)
-  console.log(response);
-}
-```
-
-#### Using Axios
-If you're making a GET resquests from another domain using `access_token`.
-```
-axios
-  .get(
-    'url(path to your callback}',
-    { params: { access_token: 'token' } },
-    headers....
-    )
-```
-
-If you're making a POST resquests from another domain using `access_token`.
-```
-axios
-  .post(
-    'url(path to your callback}',
-    { access_token: 'token' },
-    headers....
-    )
-
---OR--
-
-axios
-  .post(
-    'url(path to your callback}',
-    null,
-      {
-        params: {
-          access_token: 'token'
-        },
-        headers....
-      }
-    )
-```
 
 ## Fixing Protocol Mismatch for `redirect_uri` in Rails
 
