@@ -38,62 +38,77 @@ class App < Sinatra::Base
     <html>
       <head>
         <title>Google OAuth2 Example</title>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-        <script>
-          jQuery(function() {
-            return $.ajax({
-              url: 'https://apis.google.com/js/client:plus.js?onload=gpAsyncInit',
-              dataType: 'script',
-              cache: true
-            });
-          });
-
-          window.gpAsyncInit = function() {
-            gapi.auth.authorize({
-              immediate: true,
-              response_type: 'code',
-              cookie_policy: 'single_host_origin',
-              client_id: '#{ENV['GOOGLE_KEY']}',
-              scope: 'email profile'
-            }, function(response) {
-              return;
-            });
-            $('.googleplus-login').click(function(e) {
-              e.preventDefault();
-              gapi.auth.authorize({
-                immediate: false,
-                response_type: 'code',
-                cookie_policy: 'single_host_origin',
-                client_id: '#{ENV['GOOGLE_KEY']}',
-                scope: 'email profile'
-              }, function(response) {
-                if (response && !response.error) {
-                  // google authentication succeed, now post data to server.
-                  jQuery.ajax({type: 'POST', url: "/auth/google_oauth2/callback", data: response,
-                    success: function(data) {
-                      // Log the data returning from google.
-                      console.log(data)
-                    }
-                  });
-                } else {
-                  // google authentication failed.
-                  console.log("FAILED")
-                }
-              });
-            });
-          };
-        </script>
       </head>
+
       <body>
-      <ul>
-        <li>
-          <form method='post' action='/auth/google_oauth2'>
-            <input type="hidden" name="authenticity_token" value="#{request.env['rack.session']['csrf']}">
-            <button type='submit'>Login with Google</button>
-          </form>
-        </li>
-        <li><a href='#' class="googleplus-login">Sign in with Google via AJAX</a></li>
-      </ul>
+        <ul>
+          <li>
+            <form method="post" action="/auth/google_oauth2">
+              <input type="hidden" name="authenticity_token" value="#{request.env['rack.session']['csrf']}">
+              <button type="submit">Login with Google</button>
+            </form>
+          </li>
+
+          <li>
+            <a href="#" class="googleplus-login">Sign in with Google via AJAX</a>
+          </li>
+        </ul>
+
+        <script>
+          const a = document.querySelector('.googleplus-login');
+
+          const handleGoogleOauthSignIn = () => {
+            const oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
+
+            const params = new URLSearchParams({
+              client_id: '#{ENV['GOOGLE_KEY']}',
+              prompt: 'select_account',
+              redirect_uri: 'http://localhost:3000/callback',
+              response_type: 'code',
+              scope: 'email openid profile',
+            });
+
+            const url = `${oauth2Endpoint}?${params.toString()}`;
+            window.location.href = url;
+          }
+
+          a.addEventListener('click', event => {
+            event.preventDefault();
+            handleGoogleOauthSignIn();
+          });
+        </script>
+      </body>
+    </html>
+    HTML
+  end
+
+  get '/callback' do
+    <<-HTML
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Google OAuth2 Example</title>
+      </head>
+
+      <body>
+        <p>Redirected</p>
+
+        <script>
+          const handleGoogleOauthCallback = async () => {
+            const params = new URL(document.location.toString()).searchParams;
+            const code = params.get('code');
+
+            const response = fetch('http://localhost:3000/auth/google_oauth2/callback', {
+              body: JSON.stringify({ code, redirect_uri: 'http://localhost:3000/callback' }),
+              headers: {
+                'Content-type': 'application/json',
+              },
+              method: 'POST',
+            });
+          }
+
+          handleGoogleOauthCallback();
+        </script>
       </body>
     </html>
     HTML
