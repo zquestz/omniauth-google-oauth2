@@ -305,7 +305,7 @@ const handleGoogleOauthSignIn = () => {
   // Parameters to pass to OAuth 2.0 endpoint.
   const params = new URLSearchParams({
     client_id: YOUR_CLIENT_ID,
-    prompt: 'select_account'
+    prompt: 'select_account',
     redirect_uri: YOUR_REDIRECT_URI, // This redirect_uri needs to redirect to the same domain as the one where this request is made from.
     response_type: 'code',
     scope: 'email openid profile',
