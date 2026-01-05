@@ -149,7 +149,7 @@ module OmniAuth
 
       def get_scope(params)
         raw_scope = params[:scope] || DEFAULT_SCOPE
-        scope_list = raw_scope.split(' ').map { |item| item.split(',') }.flatten
+        scope_list = raw_scope.split.map { |item| item.split(',') }.flatten
         scope_list.map! { |s| s =~ %r{^https?://} || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
         scope_list.join(' ')
       end

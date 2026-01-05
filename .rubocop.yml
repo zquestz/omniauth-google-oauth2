@@ -3,7 +3,7 @@ Metrics/ClassLength:
 Metrics/AbcSize:
   Enabled: false
 Metrics/BlockLength:
-  ExcludedMethods: ['describe', 'context', 'shared_examples']
+  AllowedMethods: ['describe', 'context', 'shared_examples']
 Metrics/CyclomaticComplexity:
   Enabled: false
 Layout/LineLength:
@@ -18,6 +18,12 @@ Style/MutableConstant:
   Enabled: false
 Gemspec/RequiredRubyVersion:
   Enabled: false
+Gemspec/RequireMFA:
+  Enabled: false
+Gemspec/AddRuntimeDependency:
+  Enabled: false
+Gemspec/DevelopmentDependencies:
+  Enabled: false
 Lint/RaiseException:
   Enabled: false
 Lint/StructNewOverride:
@@ -27,6 +33,8 @@ Style/HashEachMethods:
 Style/HashTransformKeys:
   Enabled: false
 Style/HashTransformValues:
+  Enabled: false
+Style/FetchEnvVar:
   Enabled: false
 AllCops:
   NewCops: enable
