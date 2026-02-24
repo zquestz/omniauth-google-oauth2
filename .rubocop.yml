@@ -1,3 +1,7 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 2.5
+
 Metrics/ClassLength:
   Enabled: false
 Metrics/AbcSize:
@@ -18,6 +22,8 @@ Style/MutableConstant:
   Enabled: false
 Gemspec/RequiredRubyVersion:
   Enabled: false
+Gemspec/RequireMFA:
+  Enabled: false
 Lint/RaiseException:
   Enabled: false
 Lint/StructNewOverride:
@@ -28,5 +34,5 @@ Style/HashTransformKeys:
   Enabled: false
 Style/HashTransformValues:
   Enabled: false
-AllCops:
-  NewCops: enable
+Style/FetchEnvVar:
+  Enabled: false

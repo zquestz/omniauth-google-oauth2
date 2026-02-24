@@ -149,7 +149,7 @@ module OmniAuth
 
       def get_scope(params)
         raw_scope = params[:scope] || DEFAULT_SCOPE
-        scope_list = raw_scope.split(' ').map { |item| item.split(',') }.flatten
+        scope_list = raw_scope.split.map { |item| item.split(',') }.flatten
         scope_list.map! { |s| s =~ %r{^https?://} || BASE_SCOPES.include?(s) ? s : "#{BASE_SCOPE_URL}#{s}" }
         scope_list.join(' ')
       end
@@ -212,8 +212,8 @@ module OmniAuth
         # strip `sz` parameter (defaults to sz=50) which overrides `image_size` options
         return nil if query_parameters.nil?
 
-        params = CGI.parse(query_parameters)
-        stripped_params = params.delete_if { |key| key == 'sz' }
+        params = URI.decode_www_form(query_parameters)
+        stripped_params = params.delete_if { |key, _value| key == 'sz' }
 
         # don't return an empty Hash since that would result
         # in URLs with a trailing ? character: http://image.url?

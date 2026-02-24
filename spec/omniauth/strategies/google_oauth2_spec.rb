@@ -744,7 +744,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(subject).to receive(:client).and_return(client)
 
       token = subject.build_access_token
-      expect(token).to be_instance_of(::OAuth2::AccessToken)
+      expect(token).to be_instance_of(OAuth2::AccessToken)
       expect(token.token).to eq('valid_access_token')
       expect(token.client).to eq(client)
     end
@@ -798,7 +798,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
 
       token = subject.build_access_token
-      expect(token).to be_instance_of(::OAuth2::AccessToken)
+      expect(token).to be_instance_of(OAuth2::AccessToken)
       expect(token.token).to eq('valid_access_token')
       expect(token.client).to eq(client)
     end
