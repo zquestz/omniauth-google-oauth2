@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Ruby 2.5
+      - name: Set up Ruby 3.4
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.5
+          ruby-version: '3.4'
       - name: Lint Ruby code with RuboCop
         run: |
           bundle install

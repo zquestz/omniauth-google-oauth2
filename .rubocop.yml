@@ -1,5 +1,6 @@
 AllCops:
-  NewCops: enable
+  NewCops: disable
+  SuggestExtensions: false
   TargetRubyVersion: 2.5
 
 Metrics/ClassLength:
@@ -7,7 +8,7 @@ Metrics/ClassLength:
 Metrics/AbcSize:
   Enabled: false
 Metrics/BlockLength:
-  ExcludedMethods: ['describe', 'context', 'shared_examples']
+  AllowedMethods: ['describe', 'context', 'shared_examples']
 Metrics/CyclomaticComplexity:
   Enabled: false
 Layout/LineLength:
