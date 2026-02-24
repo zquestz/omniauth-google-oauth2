@@ -26,5 +26,4 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   # Custom scope for users only using Google for account creation/auth and do not require a refresh token.
   #
   # provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], access_type: 'online', prompt: ''
-
 end

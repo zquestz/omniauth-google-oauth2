@@ -341,6 +341,23 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe '#uid' do
+    let(:client) do
+      OAuth2::Client.new('abc', 'def') do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub": "12345"}'] }
+        end
+      end
+    end
+    let(:access_token) { OAuth2::AccessToken.from_hash(client, { 'access_token' => 'a' }) }
+    before { allow(subject).to receive(:access_token).and_return(access_token) }
+
+    it 'should return the sub from raw_info as uid' do
+      expect(subject.uid).to eq('12345')
+    end
+  end
+
   describe '#info' do
     let(:client) do
       OAuth2::Client.new('abc', 'def') do |builder|
@@ -687,6 +704,24 @@ describe OmniAuth::Strategies::GoogleOauth2 do
     end
   end
 
+  describe 'strip_unnecessary_query_parameters' do
+    it 'should return nil when query_parameters is nil' do
+      expect(subject.send(:strip_unnecessary_query_parameters, nil)).to be_nil
+    end
+
+    it 'should return nil when sz is the only parameter' do
+      expect(subject.send(:strip_unnecessary_query_parameters, 'sz=50')).to be_nil
+    end
+
+    it 'should strip sz and return remaining parameters' do
+      expect(subject.send(:strip_unnecessary_query_parameters, 'sz=50&hello=true&life=42')).to eq('hello=true&life=42')
+    end
+
+    it 'should return all parameters when sz is not present' do
+      expect(subject.send(:strip_unnecessary_query_parameters, 'hello=true&life=42')).to eq('hello=true&life=42')
+    end
+  end
+
   describe 'build_access_token' do
     it 'should use a hybrid authorization request_uri if this is an AJAX request with a code parameter' do
       allow(request).to receive(:xhr?).and_return(true)
@@ -803,6 +838,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(token.client).to eq(client)
     end
 
+    it 'should handle a malformed json request body gracefully' do
+      body = StringIO.new('not valid json{{{')
+
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:params).and_return({})
+      allow(request).to receive(:content_type).and_return('application/json')
+      allow(request).to receive(:body).and_return(body)
+
+      expect { subject.build_access_token }.to output(/JSON parse error/).to_stderr
+    end
+
     it 'should use callback_url without query_string if this is not an AJAX request' do
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return('code' => 'valid_code')
@@ -854,6 +900,10 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     it 'should not verify token if access_token is valid but app_id is false' do
       expect(subject.send(:verify_token, 'valid_access_token')).to eq(false)
+    end
+
+    it 'should return false if access_token is nil' do
+      expect(subject.send(:verify_token, nil)).to eq(false)
     end
 
     it 'should raise error if access_token is invalid' do
@@ -944,6 +994,11 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect do
         subject.send(:verify_hd, access_token)
       end.to raise_error(OmniAuth::Strategies::GoogleOauth2::CallbackError)
+    end
+
+    it 'should verify hd if options hd is set to wildcard *' do
+      subject.options.hd = '*'
+      expect(subject.send(:verify_hd, access_token)).to eq(true)
     end
   end
 end
