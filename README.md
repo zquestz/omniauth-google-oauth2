@@ -4,9 +4,9 @@
 
 Strategy to authenticate with Google via OAuth2 in OmniAuth.
 
-Get your API key at: https://code.google.com/apis/console/  Note the Client ID and the Client Secret.
+Get your API key at: https://console.cloud.google.com  Note the Client ID and the Client Secret.
 
-For more details, read the Google docs: https://developers.google.com/accounts/docs/OAuth2
+For more details, read the Google docs: https://developers.google.com/identity/protocols/oauth2
 
 ## Installation
 
@@ -20,7 +20,7 @@ Then `bundle install`.
 
 ## Google API Setup
 
-* Go to 'https://console.developers.google.com'
+* Go to 'https://console.cloud.google.com'
 * Select your project.
 * Go to Credentials, then select the "OAuth consent screen" tab on top, and provide an 'EMAIL ADDRESS' and a 'PRODUCT NAME'
 * Wait 10 minutes for changes to take effect.
@@ -76,11 +76,11 @@ You can configure several options, which you pass in to the `provider` method vi
 
 * `hd`: (Optional) Limit sign-in to a particular Google Apps hosted domain. This can be simply string `'domain.com'` or an array `%w(domain.com domain.co)`. More information at: https://developers.google.com/accounts/docs/OpenIDConnect#hd-param
 
-* `jwt_leeway`: Number of seconds passed to the JWT library as leeway. Defaults to 60 seconds. Note this only works if you use jwt 2.1, as the leeway option was removed in later versions.
+* `jwt_leeway`: Number of seconds passed to the JWT library as leeway. Defaults to 60 seconds.
 
 * `skip_jwt`: Skip JWT processing. This is for users who are seeing JWT decoding errors with the `iat` field. Always try adjusting the leeway before disabling JWT processing.
 
-* `login_hint`: When your app knows which user it is trying to authenticate, it can provide this parameter as a hint to the authentication server. Passing this hint suppresses the account chooser and either pre-fill the email box on the sign-in form, or select the proper session (if the user is using multiple sign-in), which can help you avoid problems that occur if your app logs in the wrong user account. The value can be either an email address or the sub string, which is equivalent to the user's Google+ ID.
+* `login_hint`: When your app knows which user it is trying to authenticate, it can provide this parameter as a hint to the authentication server. Passing this hint suppresses the account chooser and either pre-fill the email box on the sign-in form, or select the proper session (if the user is using multiple sign-in), which can help you avoid problems that occur if your app logs in the wrong user account. The value can be either an email address or the `sub` string (the user's unique Google ID).
 
 * `include_granted_scopes`: If this is provided with the value true, and the authorization request is granted, the authorization will include any previous authorizations granted to this user/application combination for other scopes. See Google's [Incremental Authorization](https://developers.google.com/accounts/docs/OAuth2WebServer#incrementalAuth) for additional details.
 
@@ -121,7 +121,7 @@ Here's an example of an authentication hash available in the callback by accessi
     "last_name" => "Smith",
     "image" => "https://lh4.googleusercontent.com/photo.jpg",
     "urls" => {
-      "google" => "https://plus.google.com/+JohnSmith"
+      "google" => "https://profiles.google.com/100000000000000000000"
     }
   },
   "credentials" => {
@@ -148,7 +148,7 @@ Here's an example of an authentication hash available in the callback by accessi
       "name" => "John Smith",
       "given_name" => "John",
       "family_name" => "Smith",
-      "profile" => "https://plus.google.com/+JohnSmith",
+      "profile" => "https://profiles.google.com/100000000000000000000",
       "picture" => "https://lh4.googleusercontent.com/photo.jpg?sz=50",
       "email" => "john@example.com",
       "email_verified" => "true",
@@ -227,14 +227,7 @@ end
 For your views you can login using:
 
 ```erb
-<%# omniauth-google-oauth2 1.0.x uses OmniAuth 2 and requires using HTTP Post to initiate authentication: %>
 <%= link_to "Sign in with Google", user_google_oauth2_omniauth_authorize_path, method: :post %>
-
-<%# omniauth-google-oauth2 prior 1.0.0: %>
-<%= link_to "Sign in with Google", user_google_oauth2_omniauth_authorize_path %>
-
-<%# Devise prior 4.1.0: %>
-<%= link_to "Sign in with Google", user_omniauth_authorize_path(:google_oauth2) %>
 ```
 
 An overview is available at https://github.com/heartcombo/devise/wiki/OmniAuth:-Overview
@@ -365,7 +358,7 @@ OmniAuth.config.full_host = Rails.env.production? ? 'https://domain.com' : 'http
 
 ## License
 
-Copyright (c) 2018 by Josh Ellithorpe
+Copyright (c) 2018-2026 by Josh Ellithorpe
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
