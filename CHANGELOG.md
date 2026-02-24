@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.2.2 - Unreleased
+
+### Added
+- Ruby 4.0 support in CI.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Unused `IMAGE_SIZE_REGEXP` constant.
+- Dead `skip_friends` and `skip_image_info` options (Google+ was shut down in 2019).
+- `CGI.parse` dependency replaced with `URI.decode_www_form` for Ruby 4.0 compatibility.
+
+### Fixed
+- Updated gemspec description to reference OmniAuth instead of OmniAuth 1.x.
+- Modernized CI: bumped actions/checkout to v6, rake to 13.3, and rubocop to latest.
+
 ## 1.2.1 - 2025-01-18
 
 ### Added
