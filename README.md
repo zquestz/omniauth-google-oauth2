@@ -4,7 +4,7 @@
 
 Strategy to authenticate with Google via OAuth2 in OmniAuth.
 
-Get your API key at: https://console.cloud.google.com Note the Client ID and the Client Secret.
+Get your API key at: https://console.cloud.google.com. Note the Client ID and the Client Secret.
 
 For more details, read the Google docs: https://developers.google.com/identity/protocols/oauth2
 
