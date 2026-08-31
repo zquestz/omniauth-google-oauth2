@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'jwt'
-require 'net/http'
-require 'timeout'
 require 'oauth2'
 require 'omniauth/strategies/oauth2'
 require 'openssl'
@@ -21,11 +19,6 @@ module OmniAuth
       JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
       JWKS_CACHE_TTL = 3600
       JWKS_RETRY_INTERVAL = 60
-      JWKS_OPEN_TIMEOUT = 10
-      JWKS_READ_TIMEOUT = 10
-      JWKS_WRITE_TIMEOUT = 10
-      JWKS_TOTAL_TIMEOUT = 15
-      JWKS_MAX_BYTES = 1_048_576
       AUTHORIZE_OPTIONS = %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes enable_granular_consent openid_realm device_id device_name]
 
       JwksUnavailable = Class.new(StandardError)
@@ -132,23 +125,7 @@ module OmniAuth
         hash = {}
         token = access_token['id_token']
         hash[:id_token] = token
-        if !options[:skip_jwt] && !nil_or_empty?(token)
-          # Safe to decode without a key only because every route into
-          # access_token['id_token'] has already established trust: the token
-          # endpoint delivers it over TLS from Google, and a caller-supplied one
-          # goes through verified_id_token. Any new route must do the same.
-          decoded = ::JWT.decode(token, nil, false).first
-
-          # We have to manually verify the claims because the third parameter to
-          # JWT.decode is false since no verification key is provided.
-          ::JWT::Claims.verify_payload!(decoded,
-                                        iss: ALLOWED_ISSUERS,
-                                        aud: options.client_id,
-                                        exp: { leeway: options.jwt_leeway },
-                                        nbf: { leeway: options.jwt_leeway })
-
-          hash[:id_info] = decoded
-        end
+        hash[:id_info] = id_token_claims(token) if !options[:skip_jwt] && !nil_or_empty?(token)
         hash[:raw_info] = raw_info unless skip_info?
         prune! hash
       end
@@ -175,6 +152,42 @@ module OmniAuth
 
       def nil_or_empty?(obj)
         obj.is_a?(String) ? obj.empty? : obj.nil?
+      end
+
+      def trusted_client_ids
+        [options.client_id, *Array(options.authorized_client_ids)].compact.uniq
+      end
+
+      def id_token_claims(token)
+        return @id_token_claims if token == @id_token_claims_token && !@id_token_claims.nil?
+
+        clear_id_token_claims
+
+        # Safe to decode without a key only because every route into
+        # access_token['id_token'] has already established trust: the token
+        # endpoint delivers it over TLS from Google, and a caller-supplied one
+        # is cached here only after verified_id_token has checked its signature.
+        claims = ::JWT.decode(token, nil, false).first
+
+        # We have to manually verify the claims because the third parameter to
+        # JWT.decode is false since no verification key is provided.
+        ::JWT::Claims.verify_payload!(claims,
+                                      iss: ALLOWED_ISSUERS,
+                                      aud: trusted_client_ids,
+                                      exp: { leeway: options.jwt_leeway },
+                                      nbf: { leeway: options.jwt_leeway })
+
+        cache_id_token_claims(token, claims)
+      end
+
+      def cache_id_token_claims(token, claims)
+        @id_token_claims_token = token
+        @id_token_claims = claims
+      end
+
+      def clear_id_token_claims
+        @id_token_claims_token = nil
+        @id_token_claims = nil
       end
 
       def callback_url
@@ -227,6 +240,7 @@ module OmniAuth
       end
 
       def verified_id_token(raw_id_token, access_token)
+        clear_id_token_claims
         return nil if nil_or_empty?(raw_id_token)
 
         # Widening this list means revisiting at_hash_matches?, which hardcodes
@@ -236,11 +250,12 @@ module OmniAuth
                               algorithms: ['RS256'],
                               jwks: ->(opts) { google_jwks(force: opts[:invalidate]) },
                               iss: ALLOWED_ISSUERS, verify_iss: true,
-                              aud: options.client_id, verify_aud: true,
+                              aud: trusted_client_ids, verify_aud: true,
                               verify_expiration: true, exp_leeway: options.jwt_leeway,
                               verify_not_before: true, nbf_leeway: options.jwt_leeway).first
         return nil unless same_user?(claims, access_token)
 
+        cache_id_token_claims(raw_id_token, claims)
         raw_id_token
       rescue StandardError => e
         # Fail closed. A token we cannot verify, for any reason including the
@@ -270,8 +285,11 @@ module OmniAuth
 
         # Encoded with pack rather than Base64, which is a bundled gem as of
         # Ruby 3.4 and would become a dependency of every host application.
+        # Compared with ==, not a constant-time helper: both sides derive from
+        # the access token the caller just sent, so there is no secret to leak,
+        # and OpenSSL.secure_compare does not exist before Ruby 2.7.
         digest = ::OpenSSL::Digest::SHA256.digest(access_token)[0, 16]
-        ::OpenSSL.secure_compare([digest].pack('m0').tr('+/', '-_').delete('='), expected)
+        [digest].pack('m0').tr('+/', '-_').delete('=') == expected
       end
 
       # The claim that actually matters: does the id_token describe the same
@@ -298,52 +316,17 @@ module OmniAuth
       def google_jwks(force: false)
         # Anchored to this class rather than self.class so that subclasses share
         # the one cache instead of each looking for state they do not own.
-        GoogleOauth2.cached_jwks(force: force) { ::JWT::JWK::Set.new(fetch_jwks) }
-      end
-
-      # Deliberately not fetched through the strategy's OAuth2 client. This
-      # endpoint is public and needs no credentials, and routing it through the
-      # client would let an application's client_options decide whether the
-      # signing keys are authenticated at all, which is the one thing every
-      # id_token signature check depends on.
-      def fetch_jwks
-        uri = URI.parse(JWKS_URL)
-        http = ::Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        # Hardcoded rather than OpenSSL::SSL::VERIFY_PEER: that constant is
-        # reassignable, and a widely copied "fix TLS errors" workaround sets it
-        # to VERIFY_NONE process-wide, which would silently disable this check.
-        http.verify_mode = 1
-        http.cert_store = ::OpenSSL::X509::Store.new.tap(&:set_default_paths)
-        http.open_timeout = JWKS_OPEN_TIMEOUT
-        http.read_timeout = JWKS_READ_TIMEOUT
-        http.write_timeout = JWKS_WRITE_TIMEOUT
-        # Retries would silently double every timeout above, and this runs while
-        # holding a process-wide lock.
-        http.max_retries = 0
-
-        # Identity encoding: Net::HTTP inflates gzip transparently, so otherwise a
-        # small compressed body can expand into a very large one in memory.
-        request = ::Net::HTTP::Get.new(uri, 'accept-encoding' => 'identity')
-
-        # Net::HTTP does not follow redirects, which is what we want: a 30x must
-        # not be able to move the key set to another host or downgrade to http.
-        # The outer budget is what actually bounds this: read_timeout is per read
-        # operation, so a slow drip can otherwise run indefinitely.
-        response = ::Timeout.timeout(JWKS_TOTAL_TIMEOUT, JwksUnavailable, 'JWKS fetch exceeded its time budget') do
-          http.request(request)
+        GoogleOauth2.cached_jwks(force: force) do
+          # Parsed from the body rather than the response wrapper, which warns
+          # about the JWKS "keys" entry colliding with a built-in Hash method.
+          ::JWT::JWK::Set.new(parse_jwks(client.request(:get, JWKS_URL).body))
         end
-        raise JwksUnavailable, "unexpected response #{response.code}" unless response.is_a?(::Net::HTTPOK)
-
-        parse_jwks(response.body)
       end
 
       # Google returns a small, fixed shape. Anything else is treated as an
       # outage rather than coerced, since JWT::JWK::Set will happily build a key
       # set out of surprising input, including an HMAC key from a bare string.
       def parse_jwks(body)
-        raise JwksUnavailable, 'JWKS response was too large' if body.bytesize > JWKS_MAX_BYTES
-
         parsed = JSON.parse(body)
         raise JwksUnavailable, 'JWKS response was not an object' unless parsed.is_a?(Hash)
         raise JwksUnavailable, 'JWKS response had no keys array' unless parsed['keys'].is_a?(Array)
@@ -448,7 +431,7 @@ module OmniAuth
         return false unless access_token
 
         token_info = token_info(access_token)
-        token_info['aud'] == options.client_id || options.authorized_client_ids.include?(token_info['aud'])
+        trusted_client_ids.include?(token_info['aud'])
       end
 
       def verify_hd(access_token)

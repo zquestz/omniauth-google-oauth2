@@ -8,11 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - Verify caller-supplied ID tokens against Google's published signing keys before trusting them. An ID token sent alongside a direct `access_token` callback was previously decoded without checking its signature, so `extra.id_info` and `extra.id_token` could be populated from a forged token. `uid` and `info` were never affected, as they come from the userinfo endpoint. ID tokens genuinely issued by Google continue to work unchanged.
 - Require a caller-supplied ID token to describe the same user as the access token it was sent with, by comparing the token's `sub` against the userinfo subject. A verified signature only proves Google issued the token, not that it belongs to the person the access token identifies, so without this a genuine ID token for one user could be paired with an access token for another and leave `uid` and `extra.id_info` describing different people. The `at_hash` claim is checked first as a fast path, and this subject check settles the cases `at_hash` cannot: tokens that omit the claim, and tokens whose `at_hash` is stale because the client refreshed its access token after sign-in. This check runs even when `skip_info` is set, as that option trims the auth hash rather than waiving verification.
+- The bundled example app no longer disables TLS certificate verification. Anyone who copied that line into an application should remove it: it turns off certificate checking for every outbound request in the process, not just the ones this gem makes.
 
 ### Added
 
-- `reset_jwks_cache!` for clearing the cached Google signing keys, which is useful in test suites.
-- `JWKS_URL`, `JWKS_CACHE_TTL`, `JWKS_RETRY_INTERVAL`, `JWKS_OPEN_TIMEOUT`, `JWKS_READ_TIMEOUT`, `JWKS_WRITE_TIMEOUT`, `JWKS_TOTAL_TIMEOUT`, and `JWKS_MAX_BYTES` constants, and a `JwksUnavailable` error.
+- `reset_jwks_cache!` and `cached_jwks` for clearing and inspecting the cached Google signing keys, which is useful in test suites.
+- `JWKS_URL`, `JWKS_CACHE_TTL`, and `JWKS_RETRY_INTERVAL` constants, and a `JwksUnavailable` error.
 
 ### Deprecated
 
@@ -26,12 +27,14 @@ All notable changes to this project will be documented in this file.
 
 - Ignore `refresh_token` and token expiry supplied by the caller in direct access-token callbacks, as neither can be verified.
 - Avoid decoding opaque access tokens as JWTs when no ID token is available.
-- Fail with a normal authentication failure when a callback carries no usable credential, such as an ID token with no access token, a JSON body that is not an object, or an unparseable body. These previously raised `NoMethodError` or `TypeError` on their way out of the callback.
-- Serve the cached signing keys when Google's key endpoint is briefly unreachable, and back off before refetching, rather than retrying on every request.
-- Fetch Google's signing keys over a dedicated connection with certificate verification and timeouts of its own, instead of the strategy's OAuth2 client. This keeps `client_options` from deciding whether the keys that authenticate every ID token are themselves authenticated. Note that a custom certificate authority supplied through `client_options` no longer applies to this request; use the `SSL_CERT_FILE` or `SSL_CERT_DIR` environment variables instead. Proxy environment variables are still honoured.
+- Fail with a normal authentication failure when a callback carries no usable credential, such as an ID token with no access token, a JSON body that is not an object, or an unparseable body. Previously these raised a `NoMethodError` or `TypeError` that OmniAuth turned into a failure whose message was the raw Ruby error, so applications received an unstable `message` parameter such as `undefined method 'expired?'` instead of `invalid_credentials`.
+- Serve the cached signing keys when Google's key endpoint is briefly unreachable, and back off before refetching, rather than retrying on every request, including when nothing is cached yet.
+- Reject a signing key response that is not an object with a `keys` array, rather than passing it on to be interpreted as some other kind of key.
 - Cap how often an ID token naming an unrecognised key can force a key refresh, so it cannot be used to drive unbounded outbound requests while holding the shared cache lock. Key rotation still resolves within `JWKS_RETRY_INTERVAL`.
 - `jwt_leeway` now also applies when verifying caller-supplied ID tokens, matching how it already behaved for the `extra` block.
 - Support non-rewindable JSON request bodies under Rack 3.
+- Accept ID tokens issued to any configured `authorized_client_ids`, matching the audiences already accepted for access tokens.
+- Reuse successfully verified ID token claims when building `extra`, so each ID token is decoded and validated only once per request.
 
 ## 1.2.2 - 2026-02-23
 

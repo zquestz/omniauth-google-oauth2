@@ -78,7 +78,9 @@ You can configure several options, which you pass in to the `provider` method vi
 
 - `jwt_leeway`: Number of seconds passed to the JWT library as leeway. Defaults to 60 seconds.
 
-- `skip_jwt`: Skip decoding the ID token into `extra.id_info`. This is for users who are seeing JWT decoding errors with the `iat` field. Always try adjusting the leeway before disabling JWT processing. Note that an ID token supplied by the caller in a direct access-token callback is still verified against Google's signing keys regardless of this option, since it is exposed as `extra.id_token` either way.
+- `authorized_client_ids`: Additional Google OAuth client IDs accepted as token audiences. The configured `client_id` is always accepted.
+
+- `skip_jwt`: Omit decoded ID token claims from `extra.id_info`. This only trims the auth hash; an ID token supplied by the caller in a direct access-token callback is still verified against Google's signing keys because it may be exposed as `extra.id_token`.
 
 - `login_hint`: When your app knows which user it is trying to authenticate, it can provide this parameter as a hint to the authentication server. Passing this hint suppresses the account chooser and either pre-fill the email box on the sign-in form, or select the proper session (if the user is using multiple sign-in), which can help you avoid problems that occur if your app logs in the wrong user account. The value can be either an email address or the `sub` string (the user's unique Google ID).
 
@@ -356,6 +358,26 @@ In that case, ensure to send an additional parameter `redirect_uri=` (empty stri
 #### Note about CORS
 
 If you're making POST requests to `/auth/google_oauth2/callback` from another domain, then you need to make sure `'X-Requested-With': 'XMLHttpRequest'` header is included with your request, otherwise your server might respond with `OAuth2::Error, : Invalid Value` error.
+
+### Access Token Flow
+
+As an alternative to posting a one-time code, a client that already holds a Google access token can post that instead, as either a form parameter or a JSON body:
+
+```json
+{ "access_token": "ACCESS_TOKEN", "id_token": "ID_TOKEN" }
+```
+
+Prefer the One-time Code Flow above where you can. It is immune to replay attacks, and it lets the server obtain a refresh token. This flow exists for clients such as native mobile apps that have already completed sign-in through a Google SDK and hold tokens directly.
+
+`access_token` is required. The gem validates it with Google before using it, and rejects it unless its audience is your own `client_id` or one of `authorized_client_ids`. `uid` and the `info` section are then read from Google's userinfo endpoint using that token, so they always describe the account the access token really belongs to.
+
+`id_token` is optional. When present it is verified against Google's published signing keys, and its issuer, validity window, and audience are checked. Its audience must be your own `client_id` or one of `authorized_client_ids`. It must also describe the same user as the access token, established either through its `at_hash` claim or by matching the userinfo subject. Only then does it populate `extra.id_token`, and `extra.id_info` unless `skip_jwt` is set.
+
+An ID token that fails any of those checks is discarded and the sign-in continues without it, so `extra.id_info` may be absent even though authentication succeeded. An ID token kept from an earlier sign-in will usually have expired by then, so send the one Google issued alongside the access token you are posting.
+
+Other credential fields in the request are ignored. In particular a `refresh_token` or an expiry sent by the client is dropped rather than trusted, since neither can be verified, so `credentials.refresh_token` and `credentials.expires_at` are not populated in this flow.
+
+A request that carries no usable credential, such as an `id_token` with no `access_token`, fails with OmniAuth's standard `invalid_credentials` failure.
 
 ## Fixing Protocol Mismatch for `redirect_uri` in Rails
 

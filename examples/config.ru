@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Sample app for Google OAuth2 Strategy
-# Make sure to setup the ENV variables GOOGLE_KEY and GOOGLE_SECRET
+# Make sure to setup the ENV variables GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
 # Run with "bundle exec rackup"
 
 require 'rubygems'
@@ -9,6 +9,12 @@ require 'bundler'
 require 'sinatra'
 require 'omniauth'
 require 'omniauth-google-oauth2'
+
+# OmniAuth re-raises authentication failures in development by default, and
+# `rackup` runs in development, so the sample would show a stack trace where a
+# deployed app redirects to /auth/failure. Clearing this lets the example
+# demonstrate the failure a real application would see.
+OmniAuth.config.failure_raise_out_environments = []
 
 # Main example app for omniauth-google-oauth2
 class App < Sinatra::Base
@@ -22,7 +28,7 @@ class App < Sinatra::Base
   use OmniAuth::Builder do
     # For additional provider examples please look at 'omni_auth.rb'
     # The key provider_ignores_state is only for AJAX flows. It is not recommended for normal logins.
-    provider :google_oauth2, ENV['GOOGLE_KEY'], ENV['GOOGLE_SECRET'], access_type: 'offline', prompt: 'consent', provider_ignores_state: true, scope: 'email,profile'
+    provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], access_type: 'offline', prompt: 'consent', provider_ignores_state: true, scope: 'email,profile'
   end
 
   get '/' do
@@ -54,7 +60,7 @@ class App < Sinatra::Base
             const oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
 
             const params = new URLSearchParams({
-              client_id: '#{ENV['GOOGLE_KEY']}',
+              client_id: '#{ENV['GOOGLE_CLIENT_ID']}',
               prompt: 'select_account',
               redirect_uri: 'http://localhost:3000/callback',
               response_type: 'code',
