@@ -19,6 +19,8 @@ module OmniAuth
       JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
       JWKS_CACHE_TTL = 3600
       JWKS_RETRY_INTERVAL = 60
+      LOG_MESSAGE_LIMIT = 200
+      REQUIRED_ID_TOKEN_CLAIMS = %w[iss aud exp sub].freeze
       AUTHORIZE_OPTIONS = %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes enable_granular_consent openid_realm device_id device_name]
 
       JwksUnavailable = Class.new(StandardError)
@@ -30,7 +32,13 @@ module OmniAuth
         # and refetched on expiry or when a token names a kid we do not hold.
         # The fetch deliberately happens under the lock: concurrent callers wait
         # for one request rather than each issuing their own.
-        def cached_jwks(force: false)
+        # The keys belong to Google, not to any one strategy class, so a subclass
+        # shares this cache rather than keeping a second one and refetching the
+        # same data. Delegating also keeps it from reaching for a mutex it does
+        # not own, which is only defined here.
+        def cached_jwks(force: false, &fetch)
+          return GoogleOauth2.cached_jwks(force: force, &fetch) unless equal?(GoogleOauth2)
+
           @jwks_mutex.synchronize do
             now = ::Time.now.to_i
 
@@ -67,6 +75,8 @@ module OmniAuth
         end
 
         def reset_jwks_cache!
+          return GoogleOauth2.reset_jwks_cache! unless equal?(GoogleOauth2)
+
           @jwks_mutex.synchronize do
             @jwks = nil
             @jwks_expires_at = nil
@@ -157,6 +167,14 @@ module OmniAuth
         obj.is_a?(String) ? obj.empty? : obj.nil?
       end
 
+      # Failure messages quote the request: an unknown key names the caller's own
+      # kid header, and a parse error quotes the body. Left alone, a newline in
+      # either forges a log line, so bound the length and flatten control
+      # characters to keep one record per event.
+      def sanitize_for_log(message)
+        message.to_s.gsub(/[[:cntrl:]]/, ' ')[0, LOG_MESSAGE_LIMIT]
+      end
+
       def trusted_client_ids
         [options.client_id, *Array(options.authorized_client_ids)].compact.uniq
       end
@@ -174,7 +192,11 @@ module OmniAuth
 
         # We have to manually verify the claims because the third parameter to
         # JWT.decode is false since no verification key is provided.
+        # required is what makes the rest binding: the individual claim checks
+        # pass silently when a claim is simply absent, so without this a token
+        # missing exp would never expire.
         ::JWT::Claims.verify_payload!(claims,
+                                      required: REQUIRED_ID_TOKEN_CLAIMS,
                                       iss: ALLOWED_ISSUERS,
                                       aud: trusted_client_ids,
                                       exp: { leeway: options.jwt_leeway },
@@ -226,7 +248,7 @@ module OmniAuth
               ::OAuth2::AccessToken.from_hash(client, direct_token_hash(access_token, body['id_token']))
             end
           rescue JSON::ParserError => e
-            warn "[omniauth google-oauth2] JSON parse error=#{e}"
+            warn "[omniauth google-oauth2] JSON parse error=#{sanitize_for_log(e)}"
           end
         end
       end
@@ -252,6 +274,7 @@ module OmniAuth
         claims = ::JWT.decode(raw_id_token, nil, true,
                               algorithms: ['RS256'],
                               jwks: ->(opts) { google_jwks(force: opts[:invalidate]) },
+                              required_claims: REQUIRED_ID_TOKEN_CLAIMS,
                               iss: ALLOWED_ISSUERS, verify_iss: true,
                               aud: trusted_client_ids, verify_aud: true,
                               verify_expiration: true, exp_leeway: options.jwt_leeway,
@@ -263,7 +286,7 @@ module OmniAuth
       rescue StandardError => e
         # Fail closed. A token we cannot verify, for any reason including the
         # key set being unreachable, is discarded rather than trusted.
-        warn "[omniauth google-oauth2] discarding unverified id_token: #{e.class}: #{e.message}"
+        warn "[omniauth google-oauth2] discarding unverified id_token: #{e.class}: #{sanitize_for_log(e.message)}"
         nil
       end
 
@@ -423,8 +446,11 @@ module OmniAuth
       def token_info(access_token)
         return nil unless access_token
 
+        # Keyed on k, not on the access_token this method was first called with:
+        # one request can ask about more than one token, and closing over the
+        # first would file that answer under every later key.
         @token_info ||= Hash.new do |h, k|
-          h[k] = client.request(:post, 'https://www.googleapis.com/oauth2/v3/tokeninfo', body: { access_token: access_token }).parsed
+          h[k] = client.request(:post, 'https://www.googleapis.com/oauth2/v3/tokeninfo', body: { access_token: k }).parsed
         end
 
         @token_info[access_token]

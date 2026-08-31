@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 # Sample app for Google OAuth2 Strategy
-# Make sure to setup the ENV variables GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+# Make sure to setup the ENV variables GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+# and RACK_COOKIE_SECRET
 # Run with "bundle exec rackup"
 
 require 'rubygems'

@@ -445,6 +445,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
             {
               'abc' => 'xyz',
               'exp' => Time.now.to_i + 3600,
+              'sub' => '12345',
               'nbf' => Time.now.to_i - 60,
               'iat' => Time.now.to_i,
               'aud' => 'appid',
@@ -492,6 +493,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
           {
             'abc' => 'xyz',
             'exp' => Time.now.to_i + 3600,
+            'sub' => '12345',
             'nbf' => Time.now.to_i - 60,
             'iat' => Time.now.to_i,
             'aud' => 'appid',
@@ -515,6 +517,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         let(:token_info) do
           {
             'exp' => Time.now.to_i + 3600,
+            'sub' => '12345',
             'nbf' => Time.now.to_i - 60,
             'iat' => Time.now.to_i,
             'aud' => 'android-client-id',
@@ -537,6 +540,27 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
         it 'rejects it when that client is not configured' do
           expect { subject.extra }.to raise_error(JWT::InvalidAudError)
+        end
+      end
+
+      # Also reached with an empty claim cache, so extra applies the requirement
+      # itself. A claim check passes silently when the claim is absent, so
+      # without this an id_token carrying no exp would never expire.
+      context 'when the id_token omits a required claim' do
+        let(:token_info) do
+          {
+            'exp' => Time.now.to_i + 3600,
+            'aud' => 'appid',
+            'iss' => 'https://accounts.google.com'
+          }
+        end
+        let(:id_token) { JWT.encode(token_info, 'secret') }
+        let(:access_token) do
+          OAuth2::AccessToken.from_hash(client, 'access_token' => 'valid_access_token', 'id_token' => id_token)
+        end
+
+        it 'raises rather than exposing the remaining claims' do
+          expect { subject.extra }.to raise_error(JWT::MissingRequiredClaim, /sub/)
         end
       end
 
@@ -566,6 +590,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         {
           'abc' => 'xyz',
           'exp' => Time.now.to_i + 3600,
+          'sub' => '12345',
           'nbf' => Time.now.to_i - 60,
           'iat' => Time.now.to_i,
           'aud' => 'appid',
@@ -1102,6 +1127,15 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(build_token(forged)['id_token']).to be_nil
     end
 
+    # Each claim check passes silently when the claim is simply missing, so
+    # without a required list a token with no exp would never expire.
+    described_class::REQUIRED_ID_TOKEN_CLAIMS.each do |claim|
+      it "discards an id_token with no #{claim} claim" do
+        incomplete = signed(claims.reject { |k, _| k == claim })
+        expect(build_token(incomplete)['id_token']).to be_nil
+      end
+    end
+
     it 'discards an id_token that is not yet valid' do
       expect(build_token(signed(claims.merge('nbf' => Time.now.to_i + 3600)))['id_token']).to be_nil
     end
@@ -1122,6 +1156,26 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
     it 'discards an expired id_token' do
       expect(build_token(signed(claims.merge('exp' => Time.now.to_i - 3600)))['id_token']).to be_nil
+    end
+
+    # jwt builds "Could not find public key for kid <caller's kid>", so the
+    # message quotes the request and could otherwise forge log records.
+    it 'keeps a hostile kid header to a single bounded log line' do
+      hostile = JWT.encode(claims, key, 'RS256', { kid: "evil\nFORGED LOG LINE\r\nAND ANOTHER#{'x' * 500}" })
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:params).and_return(
+        'access_token' => 'valid_access_token', 'id_token' => hostile
+      )
+      allow(subject).to receive(:verify_token).with('valid_access_token').and_return(true)
+      allow(subject).to receive(:client).and_return(client)
+
+      warnings = []
+      allow(subject).to receive(:warn) { |line| warnings << line }
+      subject.build_access_token
+
+      expect(warnings.size).to eq(1)
+      expect(warnings.first).not_to include("\n", "\r")
+      expect(warnings.first.length).to be <= described_class::LOG_MESSAGE_LIMIT + 80
     end
 
     it 'refetches the key set when a token names a key it does not hold' do
@@ -1299,6 +1353,26 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(attempts).to eq(2)
     end
 
+    # Subclassing the strategy is common, and reset_jwks_cache! is the documented
+    # test hook, so both class methods have to work from a subclass receiver.
+    context 'called on a subclass' do
+      let(:subclass) { Class.new(described_class) }
+
+      it 'shares the base class cache rather than keeping its own' do
+        fetched = subclass.cached_jwks { :shared_key_set }
+
+        expect(fetched).to eq(:shared_key_set)
+        expect(described_class.instance_variable_get(:@jwks)).to eq(:shared_key_set)
+      end
+
+      it 'clears the base class cache on reset' do
+        described_class.cached_jwks { :shared_key_set }
+
+        expect { subclass.reset_jwks_cache! }.not_to raise_error
+        expect(described_class.instance_variable_get(:@jwks)).to be_nil
+      end
+    end
+
     it 'clears every piece of cached state on reset' do
       described_class.cached_jwks { :key_set }
       described_class.reset_jwks_cache!
@@ -1361,6 +1435,12 @@ describe OmniAuth::Strategies::GoogleOauth2 do
           stub.post('/oauth2/v3/tokeninfo', 'access_token=invalid_access_token') do
             [400, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(error_description: 'Invalid Value')]
           end
+          stub.post('/oauth2/v3/tokeninfo', 'access_token=second_access_token') do
+            [200, { 'Content-Type' => 'application/json; charset=UTF-8' }, JSON.dump(
+              aud: 'another.apps.googleusercontent.com',
+              scope: 'https://www.googleapis.com/auth/drive'
+            )]
+          end
         end
       end
     end
@@ -1387,6 +1467,18 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect do
         subject.send(:verify_token, 'invalid_access_token')
       end.to raise_error(OAuth2::Error)
+    end
+
+    # One request can ask about more than one token: verify_token inspects the
+    # one from the request, while the credentials block later asks about the
+    # token the code exchange returned.
+    it 'looks each access token up on its own rather than reusing the first' do
+      expect(subject.send(:token_info, 'valid_access_token')['scope']).to eq('profile email')
+      expect(subject.send(:token_info, 'second_access_token')['scope']).to eq('https://www.googleapis.com/auth/drive')
+    end
+
+    it 'caches each token so a repeated lookup does not re-query' do
+      expect(subject.send(:token_info, 'valid_access_token')).to equal(subject.send(:token_info, 'valid_access_token'))
     end
   end
 

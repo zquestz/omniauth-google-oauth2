@@ -8,12 +8,14 @@ All notable changes to this project will be documented in this file.
 
 - Verify caller-supplied ID tokens against Google's published signing keys before trusting them. An ID token sent alongside a direct `access_token` callback was previously decoded without checking its signature, so `extra.id_info` and `extra.id_token` could be populated from a forged token. `uid` and `info` were never affected, as they come from the userinfo endpoint. A caller-supplied ID token genuinely issued by Google for the same user and a trusted client continues to be accepted after verification.
 - Require a caller-supplied ID token to describe the same user as the access token it was sent with, by comparing the token's `sub` against the userinfo subject. A verified signature only proves Google issued the token, not that it belongs to the person the access token identifies, so without this a genuine ID token for one user could be paired with an access token for another and leave `uid` and `extra.id_info` describing different people. The `at_hash` claim is checked first as a fast path, and this subject check settles the cases `at_hash` cannot: tokens that omit the claim, and tokens whose `at_hash` is stale because the client refreshed its access token after sign-in. This check runs even when `skip_info` is set, as that option trims the auth hash rather than waiving verification.
-- The bundled example app no longer disables TLS certificate verification. Anyone who copied that line into an application should remove it: it turns off certificate checking for every outbound request in the process, not just the ones this gem makes.
+- The bundled example app no longer disables TLS certificate verification. Anyone who copied that line into an application should remove it: it turns off certificate checking for every Faraday-based request in the process, not just the ones this gem makes.
 
 ### Added
 
-- `reset_jwks_cache!` and `cached_jwks` for clearing and inspecting the cached Google signing keys, which is useful in test suites.
+- `reset_jwks_cache!` for clearing the cached Google signing keys between tests.
+- `cached_jwks`, the class-level fetch-and-cache primitive behind it, which takes the fetch itself as a block.
 - `JWKS_URL`, `JWKS_CACHE_TTL`, and `JWKS_RETRY_INTERVAL` constants, and a `JwksUnavailable` error.
+- An upper bound of `< 4` on the `jwt` dependency. This is precautionary rather than a response to a released version: it keeps a future major release from being picked up before it has been verified against this strategy.
 
 ### Deprecated
 
@@ -21,11 +23,11 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
-- Nothing.
+- The fallback that placed the opaque access token in `extra.id_token` when no ID token was present. `extra.id_token` is now absent in that case rather than holding a value that was never an ID token. This was only reachable with `skip_jwt` set; without it the fallback raised instead.
 
 ### Fixed
 
-- Ignore `refresh_token` and token expiry supplied by the caller in direct access-token callbacks, as neither can be verified.
+- Ignore every credential field a caller supplies in a direct access-token callback apart from the access token itself and a verified ID token. `refresh_token` and token expiry in particular cannot be verified, so they are no longer carried through.
 - Avoid decoding opaque access tokens as JWTs when no ID token is available.
 - Fail with a normal authentication failure when a callback carries no usable credential, such as an ID token with no access token, a JSON body that is not an object, or an unparseable body. Previously these raised a `NoMethodError` or `TypeError` that OmniAuth turned into a failure whose message was the raw Ruby error, so applications received an unstable `message` parameter such as `undefined method 'expired?'` instead of `invalid_credentials`.
 - Serve the cached signing keys when Google's key endpoint is briefly unreachable, and back off before refetching, rather than retrying on every request, including when nothing is cached yet.
