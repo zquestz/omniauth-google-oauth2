@@ -32,31 +32,34 @@ module OmniAuth
         # for one request rather than each issuing their own.
         def cached_jwks(force: false)
           @jwks_mutex.synchronize do
+            now = ::Time.now.to_i
+
             # A forced refresh means some token named a kid we do not hold, which
             # the sender chooses freely. Honour it no more often than the retry
             # interval, or it becomes a way to drive unlimited fetches, each one
             # holding this lock while every other login waits.
-            force &&= @jwks_forced_at.nil? || ::Time.now.to_i >= @jwks_forced_at + JWKS_RETRY_INTERVAL
+            force &&= @jwks_forced_at.nil? || now >= @jwks_forced_at + JWKS_RETRY_INTERVAL
 
-            if force || @jwks.nil? || ::Time.now.to_i >= @jwks_expires_at.to_i
+            if force || @jwks.nil? || now >= @jwks_expires_at.to_i
               # Back off even with nothing cached. Otherwise an unreachable
               # endpoint queues every waiting caller behind its own timeout,
               # since the lock serializes them and no expiry has been recorded.
-              raise JwksUnavailable, 'within JWKS retry backoff' if @jwks.nil? && ::Time.now.to_i < @jwks_retry_at.to_i
+              raise JwksUnavailable, 'within JWKS retry backoff' if @jwks.nil? && now < @jwks_retry_at.to_i
 
-              @jwks_forced_at = ::Time.now.to_i if force
+              @jwks_forced_at = now if force
 
               begin
                 @jwks = yield
                 @jwks_expires_at = ::Time.now.to_i + JWKS_CACHE_TTL
               rescue StandardError
-                @jwks_retry_at = ::Time.now.to_i + JWKS_RETRY_INTERVAL
+                retry_at = ::Time.now.to_i + JWKS_RETRY_INTERVAL
+                @jwks_retry_at = retry_at
                 raise if @jwks.nil?
 
                 # Google's keys outlive this cache by a wide margin, so serve the
                 # stale set through a short outage rather than failing every
                 # login, and back off instead of refetching on each request.
-                @jwks_expires_at = ::Time.now.to_i + JWKS_RETRY_INTERVAL
+                @jwks_expires_at = retry_at
               end
             end
             @jwks
