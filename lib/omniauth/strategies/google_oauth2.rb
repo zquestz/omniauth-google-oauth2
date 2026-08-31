@@ -3,6 +3,7 @@
 require 'jwt'
 require 'oauth2'
 require 'omniauth/strategies/oauth2'
+require 'stringio'
 require 'uri'
 
 module OmniAuth
@@ -66,7 +67,7 @@ module OmniAuth
 
       extra do
         hash = {}
-        token = nil_or_empty?(access_token['id_token']) ? access_token.token : access_token['id_token']
+        token = access_token['id_token']
         hash[:id_token] = token
         if !options[:skip_jwt] && !nil_or_empty?(token)
           decoded = ::JWT.decode(token, nil, false).first
@@ -117,18 +118,21 @@ module OmniAuth
         elsif verifier
           client_get_token(verifier, redirect_uri || callback_url)
         elsif access_token && verify_token(access_token)
-          ::OAuth2::AccessToken.from_hash(client, request.params.dup)
+          ::OAuth2::AccessToken.from_hash(client, 'access_token' => access_token)
         elsif request.content_type =~ /json/i
           begin
-            body = JSON.parse(request.body.read)
-            request.body.rewind # rewind request body for downstream middlewares
+            raw_body = request.body.read
+            # Rack 3 input streams are not required to be rewindable, so hand
+            # downstream middlewares a fresh stream rather than rewinding this one.
+            request.env['rack.input'] = StringIO.new(raw_body).tap(&:binmode)
+            body = JSON.parse(raw_body)
             verifier = body && body['code']
             access_token = body && body['access_token']
             redirect_uri ||= body && body['redirect_uri']
             if verifier
               client_get_token(verifier, redirect_uri || 'postmessage')
             elsif verify_token(access_token)
-              ::OAuth2::AccessToken.from_hash(client, body.dup)
+              ::OAuth2::AccessToken.from_hash(client, 'access_token' => access_token)
             end
           rescue JSON::ParserError => e
             warn "[omniauth google-oauth2] JSON parse error=#{e}"

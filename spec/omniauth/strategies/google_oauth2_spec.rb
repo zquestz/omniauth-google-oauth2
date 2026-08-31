@@ -449,7 +449,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
             }
           end
           let(:id_token) { JWT.encode(token_info, 'secret') }
-          let(:access_token) { OAuth2::AccessToken.from_hash(client, 'id_token' => id_token) }
+          let(:access_token) do
+            OAuth2::AccessToken.from_hash(client, 'access_token' => 'valid_access_token', 'id_token' => id_token)
+          end
 
           it 'should include id_token when set on the access_token' do
             expect(subject.extra).to include(id_token: id_token)
@@ -486,7 +488,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
           }
         end
         let(:id_token) { JWT.encode(token_info, 'secret') }
-        let(:access_token) { OAuth2::AccessToken.from_hash(client, 'id_token' => id_token) }
+        let(:access_token) do
+          OAuth2::AccessToken.from_hash(client, 'access_token' => 'valid_access_token', 'id_token' => id_token)
+        end
 
         it 'raises JWT::InvalidIssuerError' do
           expect { subject.extra }.to raise_error(JWT::InvalidIssuerError)
@@ -503,6 +507,14 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
         it 'should not include id_info' do
           expect(subject.extra).not_to have_key(:id_info)
+        end
+      end
+
+      context 'when the access token does not include an id_token' do
+        let(:access_token) { OAuth2::AccessToken.from_hash(client, 'access_token' => 'opaque_access_token') }
+
+        it 'does not treat the opaque access token as an id_token' do
+          expect(subject.extra).not_to include(:id_token, :id_info)
         end
       end
     end
@@ -723,6 +735,17 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe 'build_access_token' do
+    # Mimics a Rack 3 input stream: readable, but deliberately not rewindable.
+    # A strict double fails the example if anything calls rewind on it.
+    def non_rewindable_input(content)
+      io = StringIO.new(content)
+      double('Rack3Input').tap do |input|
+        allow(input).to receive(:read) { |*args| io.read(*args) }
+        allow(input).to receive(:gets) { io.gets }
+        allow(input).to receive(:each) { |&block| io.each(&block) }
+      end
+    end
+
     it 'should use a hybrid authorization request_uri if this is an AJAX request with a code parameter' do
       allow(request).to receive(:xhr?).and_return(true)
       allow(request).to receive(:params).and_return('code' => 'valid_code')
@@ -765,7 +788,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.build_access_token
     end
 
-    it 'should read access_token from hash if this is not an AJAX request with a code parameter' do
+    it 'should read only access_token from params if this is not an AJAX request with a code parameter' do
       client = OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
@@ -774,7 +797,12 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
 
       allow(request).to receive(:xhr?).and_return(false)
-      allow(request).to receive(:params).and_return('access_token' => 'valid_access_token')
+      allow(request).to receive(:params).and_return(
+        'access_token' => 'valid_access_token',
+        'id_token' => 'forged_id_token',
+        'refresh_token' => 'forged_refresh_token',
+        'expires_at' => 123_456_789
+      )
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
       expect(subject).to receive(:client).and_return(client)
 
@@ -782,10 +810,15 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(token).to be_instance_of(OAuth2::AccessToken)
       expect(token.token).to eq('valid_access_token')
       expect(token.client).to eq(client)
+      expect(token.params).to be_empty
+      expect(token.refresh_token).to be_nil
+      expect(token.expires_at).to be_nil
     end
 
     it 'reads the code from a json request body' do
-      body = StringIO.new(%({"code":"json_access_token"}))
+      # Literal UTF-8 rather than JSON.dump, which would escape the accent back to ASCII.
+      payload = %({"code":"json_access_token","note":"café"})
+      body = non_rewindable_input(payload)
       client = double(:client)
       auth_code = double(:auth_code)
 
@@ -798,6 +831,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(auth_code).to receive(:get_token).with('json_access_token', { redirect_uri: 'postmessage' }, {})
 
       subject.build_access_token
+
+      expect(request.env['rack.input']).to be_a(StringIO)
+      expect(request.env['rack.input'].read.b).to eq(payload.b)
     end
 
     it 'reads the redirect uri from a json request body' do
@@ -816,8 +852,13 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       subject.build_access_token
     end
 
-    it 'reads the access token from a json request body' do
-      body = StringIO.new(%({"access_token":"valid_access_token"}))
+    it 'reads only the access token from a json request body' do
+      body = StringIO.new(JSON.dump(
+                            access_token: 'valid_access_token',
+                            id_token: 'forged_id_token',
+                            refresh_token: 'forged_refresh_token',
+                            expires_at: 123_456_789
+                          ))
       client = OAuth2::Client.new('abc', 'def') do |builder|
         builder.request :url_encoded
         builder.adapter :test do |stub|
@@ -836,10 +877,14 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       expect(token).to be_instance_of(OAuth2::AccessToken)
       expect(token.token).to eq('valid_access_token')
       expect(token.client).to eq(client)
+      expect(token.params).to be_empty
+      expect(token.refresh_token).to be_nil
+      expect(token.expires_at).to be_nil
     end
 
     it 'should handle a malformed json request body gracefully' do
-      body = StringIO.new('not valid json{{{')
+      payload = 'not valid json{{{'
+      body = non_rewindable_input(payload)
 
       allow(request).to receive(:xhr?).and_return(false)
       allow(request).to receive(:params).and_return({})
@@ -847,6 +892,9 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(request).to receive(:body).and_return(body)
 
       expect { subject.build_access_token }.to output(/JSON parse error/).to_stderr
+
+      # The body is restored for downstream middlewares even when parsing fails.
+      expect(request.env['rack.input'].read.b).to eq(payload.b)
     end
 
     it 'should use callback_url without query_string if this is not an AJAX request' do

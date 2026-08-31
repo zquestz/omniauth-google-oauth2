@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.2.3 - 2026-08-31
+
+### Fixed
+- Discard untrusted ID tokens and token metadata from direct access-token callbacks.
+- Avoid decoding opaque access tokens as JWTs when no ID token is available.
+- Support non-rewindable JSON request bodies under Rack 3.
+
 ## 1.2.2 - 2026-02-23
 
 ### Added
