@@ -10,13 +10,6 @@ require 'sinatra'
 require 'omniauth'
 require 'omniauth-google-oauth2'
 
-# Do not use for production code.
-# This is only to make setup easier when running through the sample.
-#
-# If you do have issues with certs in production code, this could help:
-# http://railsapps.github.io/openssl-certificate-verify-failed.html
-OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
-
 # Main example app for omniauth-google-oauth2
 class App < Sinatra::Base
   configure do
@@ -91,20 +84,37 @@ class App < Sinatra::Base
       </head>
 
       <body>
-        <p>Redirected</p>
+        <h1>Google OAuth2 Example</h1>
+        <p>Posting the one-time code to the callback. The auth hash appears below.</p>
+        <p id="status">Working...</p>
+        <code id="result" style="white-space: pre-wrap; overflow-wrap: anywhere; display: block;"></code>
 
         <script>
           const handleGoogleOauthCallback = async () => {
             const params = new URL(document.location.toString()).searchParams;
             const code = params.get('code');
+            const status = document.querySelector('#status');
+            const output = document.querySelector('#result');
 
-            const response = fetch('http://localhost:3000/auth/google_oauth2/callback', {
-              body: JSON.stringify({ code, redirect_uri: 'http://localhost:3000/callback' }),
-              headers: {
-                'Content-type': 'application/json',
-              },
-              method: 'POST',
-            });
+            if (!code) {
+              status.textContent = 'No code parameter in the URL.';
+              return;
+            }
+
+            try {
+              const response = await fetch('http://localhost:3000/auth/google_oauth2/callback', {
+                body: JSON.stringify({ code, redirect_uri: 'http://localhost:3000/callback' }),
+                headers: {
+                  'Content-type': 'application/json',
+                },
+                method: 'POST',
+              });
+
+              status.textContent = `${response.status} ${response.statusText}`;
+              output.textContent = await response.text();
+            } catch (error) {
+              status.textContent = `Request failed: ${error}`;
+            }
           }
 
           handleGoogleOauthCallback();
@@ -132,13 +142,15 @@ class App < Sinatra::Base
     end
   end
 
+  # omniauth.auth is never set on a failure, so report what OmniAuth does pass:
+  # the failure reason and the strategy that produced it.
   get '/auth/failure' do
     content_type 'text/plain'
-    begin
-      request.env['omniauth.auth'].to_hash.inspect
-    rescue StandardError
-      'No Data'
-    end
+    <<~TEXT
+      Authentication failed
+      message:  #{params['message'] || 'unknown'}
+      strategy: #{params['strategy'] || 'unknown'}
+    TEXT
   end
 end
 
