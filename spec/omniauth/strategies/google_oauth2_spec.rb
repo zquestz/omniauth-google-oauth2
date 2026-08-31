@@ -3,6 +3,7 @@
 require 'spec_helper'
 require 'json'
 require 'omniauth-google-oauth2'
+require 'openssl'
 require 'stringio'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
@@ -23,6 +24,8 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
   before do
     OmniAuth.config.test_mode = true
+    # The key set is cached on the class, so it must not leak between examples.
+    OmniAuth::Strategies::GoogleOauth2.reset_jwks_cache!
   end
 
   after do
@@ -499,7 +502,6 @@ describe OmniAuth::Strategies::GoogleOauth2 do
 
       context 'when the access token is empty or nil' do
         let(:access_token) { OAuth2::AccessToken.new(client, nil, { 'refresh_token' => 'foo' }) }
-        before { allow(subject.extra).to receive(:access_token).and_return(access_token) }
 
         it 'should not include id_token' do
           expect(subject.extra).not_to have_key(:id_token)
@@ -735,6 +737,10 @@ describe OmniAuth::Strategies::GoogleOauth2 do
   end
 
   describe 'build_access_token' do
+    # Stands in for what the token endpoint really hands back; a bare stub would
+    # return nil, which the strategy now rejects as "no credential".
+    let(:stubbed_token) { double('AccessToken') }
+
     # Mimics a Rack 3 input stream: readable, but deliberately not rewindable.
     # A strict double fails the example if anything calls rewind on it.
     def non_rewindable_input(content)
@@ -754,9 +760,8 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       auth_code = double(:auth_code)
       allow(client).to receive(:auth_code).and_return(auth_code)
       expect(subject).to receive(:client).and_return(client)
-      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: 'postmessage' }, {})
+      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: 'postmessage' }, {}).and_return(stubbed_token)
 
-      expect(subject).not_to receive(:orig_build_access_token)
       subject.build_access_token
     end
 
@@ -768,9 +773,8 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       auth_code = double(:auth_code)
       allow(client).to receive(:auth_code).and_return(auth_code)
       expect(subject).to receive(:client).and_return(client)
-      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: '' }, {})
+      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: '' }, {}).and_return(stubbed_token)
 
-      expect(subject).not_to receive(:orig_build_access_token)
       subject.build_access_token
     end
 
@@ -782,9 +786,8 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       auth_code = double(:auth_code)
       allow(client).to receive(:auth_code).and_return(auth_code)
       expect(subject).to receive(:client).and_return(client)
-      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: 'redirect_uri' }, {})
+      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: 'redirect_uri' }, {}).and_return(stubbed_token)
 
-      expect(subject).not_to receive(:orig_build_access_token)
       subject.build_access_token
     end
 
@@ -805,6 +808,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       )
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
       expect(subject).to receive(:client).and_return(client)
+      allow(subject).to receive(:warn)
 
       token = subject.build_access_token
       expect(token).to be_instance_of(OAuth2::AccessToken)
@@ -828,7 +832,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(client).to receive(:auth_code).and_return(auth_code)
       expect(subject).to receive(:client).and_return(client)
 
-      expect(auth_code).to receive(:get_token).with('json_access_token', { redirect_uri: 'postmessage' }, {})
+      expect(auth_code).to receive(:get_token).with('json_access_token', { redirect_uri: 'postmessage' }, {}).and_return(stubbed_token)
 
       subject.build_access_token
 
@@ -847,7 +851,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(client).to receive(:auth_code).and_return(auth_code)
       expect(subject).to receive(:client).and_return(client)
 
-      expect(auth_code).to receive(:get_token).with('json_access_token', { redirect_uri: 'sample' }, {})
+      expect(auth_code).to receive(:get_token).with('json_access_token', { redirect_uri: 'sample' }, {}).and_return(stubbed_token)
 
       subject.build_access_token
     end
@@ -870,6 +874,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(request).to receive(:content_type).and_return('application/json')
       allow(request).to receive(:body).and_return(body)
       expect(subject).to receive(:client).and_return(client)
+      allow(subject).to receive(:warn)
 
       expect(subject).to receive(:verify_token).with('valid_access_token').and_return true
 
@@ -891,10 +896,38 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(request).to receive(:content_type).and_return('application/json')
       allow(request).to receive(:body).and_return(body)
 
-      expect { subject.build_access_token }.to output(/JSON parse error/).to_stderr
+      # Warns about the body, then fails as a normal auth failure rather than
+      # handing a nil token to the caller.
+      expect do
+        expect { subject.build_access_token }.to raise_error(OmniAuth::Strategies::OAuth2::CallbackError)
+      end.to output(/JSON parse error/).to_stderr
 
       # The body is restored for downstream middlewares even when parsing fails.
       expect(request.env['rack.input'].read.b).to eq(payload.b)
+    end
+
+    it 'fails cleanly when the request carries no usable credential' do
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:params).and_return('id_token' => 'an-id-token-with-no-access-token')
+      allow(request).to receive(:content_type).and_return(nil)
+
+      # The reason matters: verify_hd raises the same class, and applications
+      # branch on the message OmniAuth puts in the failure redirect.
+      expect { subject.build_access_token }.to raise_error(
+        OmniAuth::Strategies::OAuth2::CallbackError, /invalid_credentials.*No valid credentials/
+      )
+    end
+
+    [['a JSON array', '[1,2,3]'], ['a JSON number', '42'], ['a JSON string', '"nope"']].each do |label, payload|
+      it "fails cleanly when the JSON body is #{label} rather than an object" do
+        allow(request).to receive(:xhr?).and_return(false)
+        allow(request).to receive(:params).and_return({})
+        allow(request).to receive(:content_type).and_return('application/json')
+        allow(request).to receive(:body).and_return(non_rewindable_input(payload))
+
+        # Indexing a non-Hash by string would raise TypeError out of the callback.
+        expect { subject.build_access_token }.to raise_error(OmniAuth::Strategies::OAuth2::CallbackError)
+      end
     end
 
     it 'should use callback_url without query_string if this is not an AJAX request' do
@@ -908,8 +941,398 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       allow(subject).to receive(:callback_url).and_return('redirect_uri_without_query_string')
 
       expect(subject).to receive(:client).and_return(client)
-      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: 'redirect_uri_without_query_string' }, {})
+      expect(auth_code).to receive(:get_token).with('valid_code', { redirect_uri: 'redirect_uri_without_query_string' }, {}).and_return(stubbed_token)
       subject.build_access_token
+    end
+  end
+
+  describe 'client-supplied id_token verification' do
+    # Generated once: RSA keygen is slow and the key is immutable across examples.
+    signing_key = OpenSSL::PKey::RSA.generate(2048)
+
+    # Exposed through a let so the helper methods below can reach it; a bare
+    # local is out of scope inside a def.
+    let(:key) { signing_key }
+    let(:jwks_status) { 200 }
+    let(:jwks_body) do
+      JSON.dump('keys' => [JWT::JWK.new(key, { kid: 'test-key', use: 'sig', alg: 'RS256' }).export])
+    end
+    let(:claims) do
+      { 'iss' => 'https://accounts.google.com', 'aud' => 'appid', 'sub' => '12345',
+        'email' => 'john@example.com', 'email_verified' => true,
+        'exp' => Time.now.to_i + 3600, 'nbf' => Time.now.to_i - 60 }
+    end
+    let(:genuine_id_token) { signed(claims) }
+    let(:client) do
+      OAuth2::Client.new('appid', 'secret', site: 'https://www.googleapis.com') do |builder|
+        builder.request :url_encoded
+        builder.adapter :test do |stub|
+          stub.get('/oauth2/v3/userinfo') { [200, { 'content-type' => 'application/json' }, '{"sub":"12345"}'] }
+        end
+      end
+    end
+
+    def signed(payload)
+      JWT.encode(payload, key, 'RS256', { kid: 'test-key' })
+    end
+
+    # The key set no longer travels over the strategy's OAuth2 client, so it is
+    # stubbed at the fetch instead of at a Faraday endpoint. Stubbing it on every
+    # strategy under test also guarantees no example reaches the real network.
+    def stub_jwks(strategy)
+      allow(strategy).to receive(:fetch_jwks) do
+        raise OmniAuth::Strategies::GoogleOauth2::JwksUnavailable, "unexpected response #{jwks_status}" unless jwks_status == 200
+
+        JSON.parse(jwks_body)
+      end
+    end
+
+    def build_token(id_token)
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:params).and_return(
+        'access_token' => 'valid_access_token', 'id_token' => id_token,
+        'refresh_token' => 'forged_refresh_token', 'expires_at' => 123_456_789
+      )
+      allow(subject).to receive(:verify_token).with('valid_access_token').and_return(true)
+      allow(subject).to receive(:client).and_return(client)
+      allow(subject).to receive(:warn)
+      stub_jwks(subject)
+      subject.build_access_token
+    end
+
+    it 'keeps an id_token that Google actually signed' do
+      expect(build_token(genuine_id_token)['id_token']).to eq(genuine_id_token)
+    end
+
+    it 'exposes the verified claims as id_info' do
+      subject.access_token = build_token(genuine_id_token)
+      expect(subject.extra[:id_info]['email']).to eq('john@example.com')
+    end
+
+    # These carry a kid that IS in the key set, so they reach the algorithm check
+    # rather than being turned away earlier at key lookup. Without the kid they
+    # would pass even if the RS256 pin were removed.
+    it 'discards an unsigned id_token' do
+      forged = JWT.encode(claims.merge('email' => 'victim@example.com'), nil, 'none', { kid: 'test-key' })
+      expect(build_token(forged)['id_token']).to be_nil
+    end
+
+    it 'discards an id_token signed with a symmetric algorithm' do
+      forged = JWT.encode(claims.merge('email' => 'victim@example.com'), 'guessed-secret', 'HS256', { kid: 'test-key' })
+      expect(build_token(forged)['id_token']).to be_nil
+    end
+
+    it 'discards an id_token signed with the public key as an HMAC secret' do
+      forged = JWT.encode(claims.merge('email' => 'victim@example.com'), key.public_key.to_pem, 'HS256', { kid: 'test-key' })
+      expect(build_token(forged)['id_token']).to be_nil
+    end
+
+    it 'discards an id_token that is not yet valid' do
+      expect(build_token(signed(claims.merge('nbf' => Time.now.to_i + 3600)))['id_token']).to be_nil
+    end
+
+    it 'discards an id_token signed by an unknown key' do
+      stranger = OpenSSL::PKey::RSA.generate(2048)
+      forged = JWT.encode(claims, stranger, 'RS256', { kid: 'test-key' })
+      expect(build_token(forged)['id_token']).to be_nil
+    end
+
+    it 'discards an id_token minted for another audience' do
+      expect(build_token(signed(claims.merge('aud' => 'someone-elses-app')))['id_token']).to be_nil
+    end
+
+    it 'discards an id_token from an untrusted issuer' do
+      expect(build_token(signed(claims.merge('iss' => 'https://evil.example.com')))['id_token']).to be_nil
+    end
+
+    it 'discards an expired id_token' do
+      expect(build_token(signed(claims.merge('exp' => Time.now.to_i - 3600)))['id_token']).to be_nil
+    end
+
+    it 'refetches the key set when a token names a key it does not hold' do
+      # Exercised through a real id_token rather than by calling the cache
+      # directly, so the wiring from the decoder's invalidate hook is covered:
+      # without it a rotated Google key would never be picked up.
+      fetches = 0
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:params).and_return(
+        'access_token' => 'valid_access_token',
+        'id_token' => JWT.encode(claims, key, 'RS256', { kid: 'rotated-key' })
+      )
+      allow(subject).to receive(:verify_token).with('valid_access_token').and_return(true)
+      allow(subject).to receive_messages(client: client, warn: nil)
+      allow(subject).to receive(:fetch_jwks) do
+        fetches += 1
+        JSON.parse(jwks_body)
+      end
+
+      subject.build_access_token
+
+      expect(fetches).to eq(2)
+    end
+
+    it 'still discards request-supplied refresh_token and expiry' do
+      token = build_token(genuine_id_token)
+      expect(token.refresh_token).to be_nil
+      expect(token.expires_at).to be_nil
+    end
+
+    # Precomputed with Base64.urlsafe_encode64 over 'valid_access_token' and
+    # 'another_access_token', pinning the strategy's pack-based encoding against
+    # an independent implementation. The userinfo stub above reports sub 12345,
+    # which is the subject the claims carry.
+    let(:at_hash_of_access_token) { 'CD6l-YB7vlH5uyYrxoiQtg' }
+    let(:at_hash_of_other_token) { 'ThOh39PmYAiHJ-oJozGU7A' }
+
+    it 'keeps an id_token whose at_hash matches the access token' do
+      bound = signed(claims.merge('at_hash' => at_hash_of_access_token))
+      expect(build_token(bound)['id_token']).to eq(bound)
+    end
+
+    # The example above cannot tell whether at_hash or the subject check accepted
+    # the token, because both agree. Here they disagree: a matching at_hash proves
+    # the pair was issued together, so it decides alone and userinfo is not
+    # consulted. Any error in the digest, its length, or its encoding fails this.
+    it 'accepts a matching at_hash on its own, without consulting userinfo' do
+      bound = signed(claims.merge('sub' => 'a-different-subject', 'at_hash' => at_hash_of_access_token))
+      expect(subject).not_to receive(:userinfo_for)
+
+      expect(build_token(bound)['id_token']).to eq(bound)
+    end
+
+    it 'keeps an id_token for the same user whose at_hash is stale' do
+      # A client that refreshed its access token but forwarded the id_token it
+      # was originally issued. Same person, so the subject check carries it.
+      skewed = signed(claims.merge('at_hash' => at_hash_of_other_token))
+      expect(build_token(skewed)['id_token']).to eq(skewed)
+    end
+
+    it 'discards an id_token for a different user than the access token' do
+      impostor = signed(claims.merge('sub' => 'someone-else', 'at_hash' => at_hash_of_other_token))
+      expect(build_token(impostor)['id_token']).to be_nil
+    end
+
+    it 'discards an id_token for a different user even with no at_hash to check' do
+      impostor = signed(claims.merge('sub' => 'someone-else'))
+      # Decoded, because `impostor` is the encoded JWT string and a plain
+      # include? on it would be a substring check over base64 text.
+      expect(JWT.decode(impostor, nil, false).first).not_to have_key('at_hash')
+      expect(build_token(impostor)['id_token']).to be_nil
+    end
+
+    it 'keeps a genuine id_token that carries no at_hash' do
+      expect(claims).not_to have_key('at_hash')
+      expect(build_token(genuine_id_token)['id_token']).to eq(genuine_id_token)
+    end
+
+    it 'checks the subject even when skip_info is set' do
+      @options = { skip_info: true }
+      impostor = signed(claims.merge('sub' => 'someone-else'))
+      expect(build_token(impostor)['id_token']).to be_nil
+    end
+
+    it 'discards the id_token when userinfo cannot be reached' do
+      allow_any_instance_of(OAuth2::AccessToken).to receive(:get).and_raise(OAuth2::Error.new(double(parsed: {}, body: '', headers: {}, status: 500)))
+      expect { build_token(genuine_id_token) }.not_to raise_error
+      expect(build_token(genuine_id_token)['id_token']).to be_nil
+    end
+
+    it 'verifies id_tokens for subclassed strategies too' do
+      subclass = Class.new(OmniAuth::Strategies::GoogleOauth2)
+      strategy = subclass.new(app, 'appid', 'secret').tap do |s|
+        allow(s).to receive(:request).and_return(request)
+        allow(s).to receive(:verify_token).with('valid_access_token').and_return(true)
+        allow(s).to receive(:client).and_return(client)
+        stub_jwks(s)
+      end
+      allow(request).to receive(:xhr?).and_return(false)
+      allow(request).to receive(:params).and_return(
+        'access_token' => 'valid_access_token', 'id_token' => genuine_id_token
+      )
+
+      expect(strategy.build_access_token['id_token']).to eq(genuine_id_token)
+    end
+
+    context 'when the key set cannot be fetched' do
+      let(:jwks_status) { 500 }
+
+      it 'discards the id_token rather than raising' do
+        expect { build_token(genuine_id_token) }.not_to raise_error
+      end
+
+      # The load-bearing assertion: an unreachable key set must never mean the
+      # token is taken on trust. Without this, failing open is invisible here.
+      it 'does not fall back to trusting an unverified id_token' do
+        expect(build_token(genuine_id_token)['id_token']).to be_nil
+      end
+
+      it 'still returns a usable access token' do
+        expect(build_token(genuine_id_token).token).to eq('valid_access_token')
+      end
+    end
+  end
+
+  describe 'JWKS retrieval' do
+    # fetch_jwks is the trust root for every signature check, so it is exercised
+    # for real here rather than stubbed. Net::HTTP is stubbed at the transport so
+    # the connection it configures can be inspected.
+    describe 'fetch_jwks' do
+      let(:http) { instance_double(Net::HTTP) }
+      let(:body) { JSON.dump('keys' => []) }
+      let(:response) { instance_double(Net::HTTPOK, code: '200', body: body) }
+
+      before do
+        allow(Net::HTTP).to receive(:new).and_return(http)
+        allow(http).to receive(:use_ssl=)
+        allow(http).to receive(:verify_mode=)
+        allow(http).to receive(:cert_store=)
+        allow(http).to receive(:open_timeout=)
+        allow(http).to receive(:read_timeout=)
+        allow(http).to receive(:write_timeout=)
+        allow(http).to receive(:max_retries=)
+        allow(http).to receive(:request).and_return(response)
+        allow(response).to receive(:is_a?).with(Net::HTTPOK).and_return(true)
+      end
+
+      it 'requests the hardcoded Google endpoint over TLS' do
+        expect(Net::HTTP).to receive(:new).with('www.googleapis.com', 443).and_return(http)
+        expect(http).to receive(:use_ssl=).with(true)
+
+        subject.send(:fetch_jwks)
+      end
+
+      it 'verifies the certificate chain' do
+        # Literal 1 rather than the constant, which callers can reassign.
+        expect(http).to receive(:verify_mode=).with(1)
+        expect(http).to receive(:cert_store=).with(instance_of(OpenSSL::X509::Store))
+
+        subject.send(:fetch_jwks)
+      end
+
+      it 'bounds every phase of the exchange' do
+        expect(http).to receive(:open_timeout=).with(described_class::JWKS_OPEN_TIMEOUT)
+        expect(http).to receive(:read_timeout=).with(described_class::JWKS_READ_TIMEOUT)
+        expect(http).to receive(:write_timeout=).with(described_class::JWKS_WRITE_TIMEOUT)
+        # Retries would silently double each timeout above.
+        expect(http).to receive(:max_retries=).with(0)
+
+        subject.send(:fetch_jwks)
+      end
+
+      it 'refuses compressed responses so a small body cannot inflate in memory' do
+        expect(http).to receive(:request) do |request|
+          expect(request['accept-encoding']).to eq('identity')
+          response
+        end
+
+        subject.send(:fetch_jwks)
+      end
+
+      it 'returns the parsed key set on success' do
+        expect(subject.send(:fetch_jwks)).to eq('keys' => [])
+      end
+
+      [301, 302, 307, 308].each do |status|
+        it "treats a #{status} as a failure rather than following it" do
+          allow(response).to receive_messages(code: status.to_s, is_a?: false)
+
+          expect { subject.send(:fetch_jwks) }.to raise_error(described_class::JwksUnavailable, /#{status}/)
+        end
+      end
+
+      it 'rejects a non-200 response' do
+        allow(response).to receive_messages(code: '500', is_a?: false)
+
+        expect { subject.send(:fetch_jwks) }.to raise_error(described_class::JwksUnavailable, /500/)
+      end
+
+      it 'rejects a response larger than the cap' do
+        allow(response).to receive(:body).and_return('x' * (described_class::JWKS_MAX_BYTES + 1))
+
+        expect { subject.send(:fetch_jwks) }.to raise_error(described_class::JwksUnavailable, /too large/)
+      end
+
+      it 'rejects a body that is not a JSON object' do
+        allow(response).to receive(:body).and_return('[1,2,3]')
+
+        expect { subject.send(:fetch_jwks) }.to raise_error(described_class::JwksUnavailable, /not an object/)
+      end
+
+      it 'rejects an object whose keys entry is not an array' do
+        # JWT::JWK::Set would otherwise build an HMAC key out of a bare string.
+        allow(response).to receive(:body).and_return(JSON.dump('keys' => 'nope'))
+
+        expect { subject.send(:fetch_jwks) }.to raise_error(described_class::JwksUnavailable, /no keys array/)
+      end
+
+      it 'rejects a body that is not JSON at all' do
+        allow(response).to receive(:body).and_return('<html>502</html>')
+
+        expect { subject.send(:fetch_jwks) }.to raise_error(JSON::ParserError)
+      end
+    end
+
+    it 'refetches when a token names a key it does not hold' do
+      # Key rotation has to resolve, so the first unknown kid forces a refresh.
+      attempts = 0
+      fetch = -> { attempts += 1 and :key_set }
+      described_class.cached_jwks(&fetch)
+      described_class.cached_jwks(force: true, &fetch)
+
+      expect(attempts).to eq(2)
+    end
+
+    it 'throttles forced refetches so unknown kids cannot drive them' do
+      # The sender picks the kid, so an unthrottled force is a way to make the
+      # process fetch on demand while holding the lock.
+      attempts = 0
+      fetch = -> { attempts += 1 and :key_set }
+      described_class.cached_jwks(&fetch)
+      10.times { described_class.cached_jwks(force: true, &fetch) }
+
+      expect(attempts).to eq(2)
+    end
+
+    it 'clears every piece of cached state on reset' do
+      described_class.cached_jwks { :key_set }
+      described_class.reset_jwks_cache!
+
+      %i[@jwks @jwks_expires_at @jwks_retry_at @jwks_forced_at].each do |ivar|
+        expect(described_class.instance_variable_get(ivar)).to be_nil
+      end
+    end
+
+    it 'backs off after a failed fetch even with nothing cached' do
+      attempts = 0
+      3.times do
+        expect do
+          described_class.cached_jwks do
+            attempts += 1
+            raise described_class::JwksUnavailable
+          end
+        end.to raise_error(described_class::JwksUnavailable)
+      end
+
+      expect(attempts).to eq(1)
+    end
+
+    it 'serves the stale key set and backs off when a refresh fails' do
+      described_class.cached_jwks { :cached_key_set }
+      described_class.instance_variable_set(:@jwks_expires_at, Time.now.to_i - 1)
+
+      attempts = 0
+      served = described_class.cached_jwks do
+        attempts += 1
+        raise SocketError, 'key endpoint unreachable'
+      end
+
+      expect(served).to eq(:cached_key_set)
+      expect(attempts).to eq(1)
+    end
+
+    it 'raises rather than returning nothing when the first fetch fails' do
+      expect { described_class.cached_jwks { raise SocketError, 'down at boot' } }
+        .to raise_error(SocketError)
     end
   end
 

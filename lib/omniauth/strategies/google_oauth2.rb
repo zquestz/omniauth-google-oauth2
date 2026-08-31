@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require 'jwt'
+require 'net/http'
+require 'timeout'
 require 'oauth2'
 require 'omniauth/strategies/oauth2'
+require 'openssl'
 require 'stringio'
 require 'uri'
 
@@ -15,7 +18,67 @@ module OmniAuth
       BASE_SCOPES = %w[profile email openid].freeze
       DEFAULT_SCOPE = 'email,profile'
       USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
+      JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
+      JWKS_CACHE_TTL = 3600
+      JWKS_RETRY_INTERVAL = 60
+      JWKS_OPEN_TIMEOUT = 10
+      JWKS_READ_TIMEOUT = 10
+      JWKS_WRITE_TIMEOUT = 10
+      JWKS_TOTAL_TIMEOUT = 15
+      JWKS_MAX_BYTES = 1_048_576
       AUTHORIZE_OPTIONS = %i[access_type hd login_hint prompt request_visible_actions scope state redirect_uri include_granted_scopes enable_granular_consent openid_realm device_id device_name]
+
+      JwksUnavailable = Class.new(StandardError)
+
+      @jwks_mutex = Mutex.new
+
+      class << self
+        # Google's signing keys rotate, so the key set is shared across requests
+        # and refetched on expiry or when a token names a kid we do not hold.
+        # The fetch deliberately happens under the lock: concurrent callers wait
+        # for one request rather than each issuing their own.
+        def cached_jwks(force: false)
+          @jwks_mutex.synchronize do
+            # A forced refresh means some token named a kid we do not hold, which
+            # the sender chooses freely. Honour it no more often than the retry
+            # interval, or it becomes a way to drive unlimited fetches, each one
+            # holding this lock while every other login waits.
+            force &&= @jwks_forced_at.nil? || ::Time.now.to_i >= @jwks_forced_at + JWKS_RETRY_INTERVAL
+
+            if force || @jwks.nil? || ::Time.now.to_i >= @jwks_expires_at.to_i
+              # Back off even with nothing cached. Otherwise an unreachable
+              # endpoint queues every waiting caller behind its own timeout,
+              # since the lock serializes them and no expiry has been recorded.
+              raise JwksUnavailable, 'within JWKS retry backoff' if @jwks.nil? && ::Time.now.to_i < @jwks_retry_at.to_i
+
+              @jwks_forced_at = ::Time.now.to_i if force
+
+              begin
+                @jwks = yield
+                @jwks_expires_at = ::Time.now.to_i + JWKS_CACHE_TTL
+              rescue StandardError
+                @jwks_retry_at = ::Time.now.to_i + JWKS_RETRY_INTERVAL
+                raise if @jwks.nil?
+
+                # Google's keys outlive this cache by a wide margin, so serve the
+                # stale set through a short outage rather than failing every
+                # login, and back off instead of refetching on each request.
+                @jwks_expires_at = ::Time.now.to_i + JWKS_RETRY_INTERVAL
+              end
+            end
+            @jwks
+          end
+        end
+
+        def reset_jwks_cache!
+          @jwks_mutex.synchronize do
+            @jwks = nil
+            @jwks_expires_at = nil
+            @jwks_retry_at = nil
+            @jwks_forced_at = nil
+          end
+        end
+      end
 
       option :name, 'google_oauth2'
       option :skip_jwt, false
@@ -70,6 +133,10 @@ module OmniAuth
         token = access_token['id_token']
         hash[:id_token] = token
         if !options[:skip_jwt] && !nil_or_empty?(token)
+          # Safe to decode without a key only because every route into
+          # access_token['id_token'] has already established trust: the token
+          # endpoint delivers it over TLS from Google, and a caller-supplied one
+          # goes through verified_id_token. Any new route must do the same.
           decoded = ::JWT.decode(token, nil, false).first
 
           # We have to manually verify the claims because the third parameter to
@@ -92,6 +159,11 @@ module OmniAuth
 
       def custom_build_access_token
         access_token = get_access_token(request)
+
+        # Nothing in the request produced a usable credential. Raising here gives
+        # the caller an ordinary auth failure; the alternative is omniauth-oauth2
+        # calling #expired? on nil and the request dying with a NoMethodError.
+        raise CallbackError.new(:invalid_credentials, 'No valid credentials were supplied in the callback request') if access_token.nil?
 
         verify_hd(access_token)
         access_token
@@ -118,7 +190,7 @@ module OmniAuth
         elsif verifier
           client_get_token(verifier, redirect_uri || callback_url)
         elsif access_token && verify_token(access_token)
-          ::OAuth2::AccessToken.from_hash(client, 'access_token' => access_token)
+          ::OAuth2::AccessToken.from_hash(client, direct_token_hash(access_token, request.params['id_token']))
         elsif request.content_type =~ /json/i
           begin
             raw_body = request.body.read
@@ -126,18 +198,157 @@ module OmniAuth
             # downstream middlewares a fresh stream rather than rewinding this one.
             request.env['rack.input'] = StringIO.new(raw_body).tap(&:binmode)
             body = JSON.parse(raw_body)
+            # Valid JSON that is not an object carries no credential, and
+            # indexing it by string would raise rather than fall through.
+            body = nil unless body.is_a?(Hash)
             verifier = body && body['code']
             access_token = body && body['access_token']
             redirect_uri ||= body && body['redirect_uri']
             if verifier
               client_get_token(verifier, redirect_uri || 'postmessage')
             elsif verify_token(access_token)
-              ::OAuth2::AccessToken.from_hash(client, 'access_token' => access_token)
+              ::OAuth2::AccessToken.from_hash(client, direct_token_hash(access_token, body['id_token']))
             end
           rescue JSON::ParserError => e
             warn "[omniauth google-oauth2] JSON parse error=#{e}"
           end
         end
+      end
+
+      # An id_token supplied by the caller is only as trustworthy as its
+      # signature, so it is carried through only once Google has vouched for it.
+      # Nothing else from the request is: refresh_token and expiry cannot be
+      # verified at all, so they stay dropped.
+      def direct_token_hash(access_token, raw_id_token)
+        hash = { 'access_token' => access_token }
+        id_token = verified_id_token(raw_id_token, access_token)
+        hash['id_token'] = id_token if id_token
+        hash
+      end
+
+      def verified_id_token(raw_id_token, access_token)
+        return nil if nil_or_empty?(raw_id_token)
+
+        # Widening this list means revisiting at_hash_matches?, which hardcodes
+        # SHA-256 because at_hash is defined over the digest named by the token's
+        # own alg header.
+        claims = ::JWT.decode(raw_id_token, nil, true,
+                              algorithms: ['RS256'],
+                              jwks: ->(opts) { google_jwks(force: opts[:invalidate]) },
+                              iss: ALLOWED_ISSUERS, verify_iss: true,
+                              aud: options.client_id, verify_aud: true,
+                              verify_expiration: true, exp_leeway: options.jwt_leeway,
+                              verify_not_before: true, nbf_leeway: options.jwt_leeway).first
+        return nil unless same_user?(claims, access_token)
+
+        raw_id_token
+      rescue StandardError => e
+        # Fail closed. A token we cannot verify, for any reason including the
+        # key set being unreachable, is discarded rather than trusted.
+        warn "[omniauth google-oauth2] discarding unverified id_token: #{e.class}: #{e.message}"
+        nil
+      end
+
+      # A signature proves Google issued the id_token, not that it describes the
+      # same person as the access token it arrived beside. Without that, a
+      # genuine id_token for one user could be presented with another user's
+      # access token, leaving uid and extra.id_info describing different people.
+      def same_user?(claims, access_token)
+        return true if at_hash_matches?(claims, access_token)
+
+        subjects_match?(claims, access_token)
+      end
+
+      # at_hash ties an id_token to one specific access token: the left half of
+      # the SHA-256 of that token, base64url encoded. SHA-256 because the digest
+      # follows the token's alg header, which the decode above pins to RS256.
+      # Only a fast path, so absence and mismatch are both just "unproven here",
+      # deferring to the subject check rather than deciding anything.
+      def at_hash_matches?(claims, access_token)
+        expected = claims['at_hash']
+        return false if nil_or_empty?(expected)
+
+        # Encoded with pack rather than Base64, which is a bundled gem as of
+        # Ruby 3.4 and would become a dependency of every host application.
+        digest = ::OpenSSL::Digest::SHA256.digest(access_token)[0, 16]
+        ::OpenSSL.secure_compare([digest].pack('m0').tr('+/', '-_').delete('='), expected)
+      end
+
+      # The claim that actually matters: does the id_token describe the same
+      # person the access token belongs to? Comparing subjects tests that
+      # directly, where at_hash only tests it by proxy. It also stays correct
+      # when a client refreshes its access token but forwards the id_token it
+      # was originally issued, which is a legitimate at_hash mismatch.
+      def subjects_match?(claims, access_token)
+        subject = claims['sub']
+        return false if nil_or_empty?(subject)
+        return true if subject == userinfo_for(access_token)['sub']
+
+        warn '[omniauth google-oauth2] discarding id_token: subject does not match the access token'
+        false
+      end
+
+      # Memoized into the same ivar raw_info and verify_hd use, so the lookup is
+      # shared rather than repeated. skip_info still governs whether any of this
+      # reaches the auth hash; it trims output, it does not waive the check.
+      def userinfo_for(access_token)
+        @raw_info ||= ::OAuth2::AccessToken.from_hash(client, 'access_token' => access_token).get(USER_INFO_URL).parsed
+      end
+
+      def google_jwks(force: false)
+        # Anchored to this class rather than self.class so that subclasses share
+        # the one cache instead of each looking for state they do not own.
+        GoogleOauth2.cached_jwks(force: force) { ::JWT::JWK::Set.new(fetch_jwks) }
+      end
+
+      # Deliberately not fetched through the strategy's OAuth2 client. This
+      # endpoint is public and needs no credentials, and routing it through the
+      # client would let an application's client_options decide whether the
+      # signing keys are authenticated at all, which is the one thing every
+      # id_token signature check depends on.
+      def fetch_jwks
+        uri = URI.parse(JWKS_URL)
+        http = ::Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        # Hardcoded rather than OpenSSL::SSL::VERIFY_PEER: that constant is
+        # reassignable, and a widely copied "fix TLS errors" workaround sets it
+        # to VERIFY_NONE process-wide, which would silently disable this check.
+        http.verify_mode = 1
+        http.cert_store = ::OpenSSL::X509::Store.new.tap(&:set_default_paths)
+        http.open_timeout = JWKS_OPEN_TIMEOUT
+        http.read_timeout = JWKS_READ_TIMEOUT
+        http.write_timeout = JWKS_WRITE_TIMEOUT
+        # Retries would silently double every timeout above, and this runs while
+        # holding a process-wide lock.
+        http.max_retries = 0
+
+        # Identity encoding: Net::HTTP inflates gzip transparently, so otherwise a
+        # small compressed body can expand into a very large one in memory.
+        request = ::Net::HTTP::Get.new(uri, 'accept-encoding' => 'identity')
+
+        # Net::HTTP does not follow redirects, which is what we want: a 30x must
+        # not be able to move the key set to another host or downgrade to http.
+        # The outer budget is what actually bounds this: read_timeout is per read
+        # operation, so a slow drip can otherwise run indefinitely.
+        response = ::Timeout.timeout(JWKS_TOTAL_TIMEOUT, JwksUnavailable, 'JWKS fetch exceeded its time budget') do
+          http.request(request)
+        end
+        raise JwksUnavailable, "unexpected response #{response.code}" unless response.is_a?(::Net::HTTPOK)
+
+        parse_jwks(response.body)
+      end
+
+      # Google returns a small, fixed shape. Anything else is treated as an
+      # outage rather than coerced, since JWT::JWK::Set will happily build a key
+      # set out of surprising input, including an HMAC key from a bare string.
+      def parse_jwks(body)
+        raise JwksUnavailable, 'JWKS response was too large' if body.bytesize > JWKS_MAX_BYTES
+
+        parsed = JSON.parse(body)
+        raise JwksUnavailable, 'JWKS response was not an object' unless parsed.is_a?(Hash)
+        raise JwksUnavailable, 'JWKS response had no keys array' unless parsed['keys'].is_a?(Array)
+
+        parsed
       end
 
       def client_get_token(verifier, redirect_uri)
