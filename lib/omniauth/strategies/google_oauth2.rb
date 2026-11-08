@@ -100,6 +100,23 @@ module OmniAuth
 
       def authorize_params
         super.tap do |params|
+          # Any authorize option that is also in :overridable_authorize_options
+          # may be supplied on the incoming request, including :state. When a
+          # request supplies :state it replaces the random value the base
+          # strategy generated, so session['omniauth.state'] below is set to a
+          # request-controlled value.
+          #
+          # This is safe only because OmniAuth protects the request phase
+          # itself: by default it accepts the request phase over POST only and
+          # runs OmniAuth.config.request_validation_phase
+          # (OmniAuth::AuthenticityTokenProtection), so a cross-site attacker
+          # cannot initiate the request phase to plant a chosen state in a
+          # victim's session. Do NOT weaken that protection (e.g.
+          # allowed_request_methods = [:get] or disabling the authenticity
+          # token) while leaving :state overridable, or the callback's state
+          # check can be bypassed (login CSRF). If the request phase cannot be
+          # CSRF-protected, remove :state from :overridable_authorize_options so
+          # the framework-generated state is preserved.
           (options[:authorize_options] & options[:overridable_authorize_options]).each do |k|
             params[k] = request.params[k.to_s] unless [nil, ''].include?(request.params[k.to_s])
           end
