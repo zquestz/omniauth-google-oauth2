@@ -7,7 +7,9 @@ require 'openssl'
 require 'stringio'
 
 describe OmniAuth::Strategies::GoogleOauth2 do
-  let(:request) { double('Request', params: {}, cookies: {}, env: {}) }
+  # omniauth-oauth2 1.10 builds the callback URL inside authorize_params, and
+  # OmniAuth takes the host from the request, so the double needs a URL.
+  let(:request) { double('Request', params: {}, cookies: {}, env: {}, scheme: 'https', url: 'https://example.com/auth/google_oauth2') }
   let(:app) do
     lambda do
       [200, {}, ['Hello.']]
@@ -235,7 +237,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       end
 
       it 'should set the omniauth.state dynamically' do
-        allow(subject).to receive(:request) { double('Request', params: { 'state' => 'some_state' }, env: {}) }
+        allow(subject).to receive(:request) { double('Request', params: { 'state' => 'some_state' }, env: {}, scheme: 'https', url: 'https://example.com/auth/google_oauth2') }
         expect(subject.authorize_params['state']).to eq('some_state')
         expect(subject.authorize_params[:state]).to eq('some_state')
         expect(subject.session['omniauth.state']).to eq('some_state')
@@ -254,7 +256,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
       describe 'request overrides' do
         %i[access_type hd login_hint prompt scope state].each do |k|
           context "authorize option #{k}" do
-            let(:request) { double('Request', params: { k.to_s => 'http://example.com' }, cookies: {}, env: {}) }
+            let(:request) { double('Request', params: { k.to_s => 'http://example.com' }, cookies: {}, env: {}, scheme: 'https', url: 'https://example.com/auth/google_oauth2') }
 
             context 'when overridable_authorize_options is default' do
               it "should set the #{k} authorize option dynamically in the request" do
@@ -273,7 +275,7 @@ describe OmniAuth::Strategies::GoogleOauth2 do
         end
 
         describe 'custom authorize_options' do
-          let(:request) { double('Request', params: { 'foo' => 'something' }, cookies: {}, env: {}) }
+          let(:request) { double('Request', params: { 'foo' => 'something' }, cookies: {}, env: {}, scheme: 'https', url: 'https://example.com/auth/google_oauth2') }
 
           context 'when overridable_authorize_options is default' do
             it 'should not support request overrides from custom authorize_options' do
